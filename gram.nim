@@ -52,6 +52,10 @@ proc count*[N, E](nodes: Nodes[N, E] | Edges[N, E]): int =
   for node in nodes.items:
     inc result
 
+proc len*[N, E](nodes: Nodes[N, E] | Edges[N, E]): int
+  {.deprecated: "count() conveys the O(N) cost".} =
+  result = count(nodes)
+
 proc hasKey*[N, E](node: Node[N, E]; key: E): bool =
   for edge in node.edges.items:
     if edge.value == key:
