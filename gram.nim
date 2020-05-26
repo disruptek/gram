@@ -108,3 +108,6 @@ iterator neighbors*[N, E](node: Node[N, E]):
 
 proc `==`*[N, E](edge: Edge[N, E]; value: E): bool =
   result = edge.value == value
+
+proc `==`*[N, E](node: Node[N, E]; value: N): bool =
+  result = node.value == value
