@@ -32,6 +32,12 @@ proc contains*[N, E](nodes: Nodes[N, E]; value: N): bool =
       result = true
       break
 
+proc contains*[N, E](edge: Edge[N, E]; value: N): bool =
+  result = edge.source.value == value or edge.dest.value == value
+
+proc contains*[N, E](edge: Edge[N, E]; target: Node[N, E]): bool =
+  result = target in [edge.source, edge.dest]
+
 proc add*[N, E](node: var Node[N, E]; edge: E; target: Node[N, E]) =
   var
     edge = Edge[N, E](value: edge, source: node, dest: target)
@@ -96,10 +102,11 @@ proc hasKey*[N, E](nodes: Nodes[N, E]; key: N): bool =
       result = true
       break
 
-iterator edges*[N, E](nodes: Nodes[N, E]): Edge[N, E] =
+iterator edges*[N, E](nodes: Nodes[N, E]):
+  tuple[source: Node[N, E], edge: Edge[N, E], dest: Node[N, E]] =
   for node in nodes.items:
     for edge in node.edges.items:
-      yield edge
+      yield (source: node, edge: edge, dest: edge.dest)
 
 iterator neighbors*[N, E](node: Node[N, E]):
   tuple[edge: Edge[N, E], node: Node[N, E]] =
