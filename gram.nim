@@ -70,7 +70,7 @@ proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] =
   block found:
     for edge in node.edges.mitems:
       if edge.value == key:
-        result = edge.node[]
+        result = edge.dest
         break found
     raise newException(KeyError, "edge not found: " & $key)
 
