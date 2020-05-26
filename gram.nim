@@ -144,3 +144,8 @@ proc `==`*[N, E](edge: Edge[N, E]; value: E): bool =
 proc `==`*[N, E](node: Node[N, E]; value: N): bool =
   ## convenience equality for nodes and their values
   result = node.value == value
+
+iterator items*[N, E](nodes: Nodes[N, E]): Node[N, E] =
+  ## items iterator for nodes, obvs
+  for node in lists.items(nodes):
+    yield node
