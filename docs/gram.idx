@@ -1,0 +1,25 @@
+Graph	gram.html#Graph	gram: Graph	
+Node	gram.html#Node	gram: Node	
+Edge	gram.html#Edge	gram: Edge	
+newGraph	gram.html#newGraph	gram: newGraph[N, E](): Graph[N, E]	
+clear	gram.html#clear,Graph[N,E]	gram: clear[N, E](graph: var Graph[N, E])	
+del	gram.html#del,Graph[N,E],Node[N,E]	gram: del[N, E](graph: var Graph[N, E]; node: Node[N, E])	
+add	gram.html#add,Graph[N,E],Node[N,E]	gram: add[N, E](graph: var Graph[N, E]; node: Node[N, E])	
+add	gram.html#add,Graph[N,E],N	gram: add[N, E](graph: var Graph[N, E]; value: N)	
+contains	gram.html#contains,Edge[N,E],N	gram: contains[N, E](edge: Edge[N, E]; value: N): bool	
+contains	gram.html#contains,Edge[N,E],Node[N,E]	gram: contains[N, E](edge: Edge[N, E]; node: Node[N, E]): bool	
+del	gram.html#del,Node[N,E],Edge[N,E]	gram: del[N, E](node: var Node[N, E]; edge: Edge[N, E])	
+add	gram.html#add,Node[N,E],Edge[N,E],Node[N,E]	gram: add[N, E](node: var Node[N, E]; edge: Edge[N, E]; target: Node[N, E])	
+add	gram.html#add,Node[N,E],E,Node[N,E]	gram: add[N, E](node: var Node[N, E]; value: E; target: Node[N, E])	
+add	gram.html#add,Node[N,E],E,N	gram: add[N, E](node: var Node[N, E]; edge: E; value: N)	
+len	gram.html#len	gram: len[N, E](nodes: Nodes[N, E] | Edges[N, E]): int	
+len	gram.html#len,Graph[N,E]	gram: len[N, E](graph: Graph[N, E]): int	
+hasKey	gram.html#hasKey,Node[N,E],E	gram: hasKey[N, E](node: Node[N, E]; key: E): bool	
+`$`	gram.html#$	gram: `$`[N, E](thing: Node[N, E] | Edge[N, E]): string	
+`[]`	gram.html#[],Node[N,E],E	gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]	
+`[]`	gram.html#[],Node[N,E],E_2	gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]	
+`[]`	gram.html#[],Graph[N,E],N	gram: `[]`[N, E](graph: Graph[N, E]; key: N): Node[N, E]	
+hasKey	gram.html#hasKey,Graph[N,E],N	gram: hasKey[N, E](graph: Graph[N, E]; key: N): bool	
+items	gram.html#items.i,Graph[N,E]	gram: items[N, E](graph: Graph[N, E]): Node[N, E]	
+edges	gram.html#edges.i,Graph[N,E]	gram: edges[N, E](graph: Graph[N, E]): tuple[source: Node[N, E], edge: Edge[N, E],\n                                   target: Node[N, E]]	
+neighbors	gram.html#neighbors.i,Node[N,E]	gram: neighbors[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], node: Node[N, E]]	
