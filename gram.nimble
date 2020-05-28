@@ -1,8 +1,10 @@
-version = "0.0.3"
+version = "0.0.4"
 author = "disruptek"
 description = "lightweight generic graphs"
 license = "MIT"
 requires "nim >= 1.0.0"
+
+requires "https://github.com/disruptek/criterion"
 
 proc execTest(test: string) =
   exec "nim c           -f -r " & test
@@ -15,4 +17,4 @@ proc execTest(test: string) =
     exec "nim cpp --gc:arc -d:danger -r " & test
 
 task test, "run tests for travis":
-  execTest("tests/test.nim")
+  execTest("gram.nim")

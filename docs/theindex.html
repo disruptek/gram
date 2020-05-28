@@ -81,9 +81,9 @@ function main() {
 <li><a class="reference external"
           data-doc-search-tag="gram: `[]`[N, E](graph: var Graph[N, E]; key: N): var Node[N, E]" href="gram.html#%5B%5D%2CGraph%5BN%2CE%5D%2CN">gram: `[]`[N, E](graph: var Graph[N, E]; key: N): var Node[N, E]</a></li>
           <li><a class="reference external"
-          data-doc-search-tag="gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]" href="gram.html#%5B%5D%2CNode%5BN%2CE%5D%2CE">gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]</a></li>
+          data-doc-search-tag="gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]" href="gram.html#%5B%5D%2CNode%5BN%2CE%5D%2CE">gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]</a></li>
           <li><a class="reference external"
-          data-doc-search-tag="gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]" href="gram.html#%5B%5D%2CNode%5BN%2CE%5D%2CE_2">gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]</a></li>
+          data-doc-search-tag="gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]" href="gram.html#%5B%5D%2CNode%5BN%2CE%5D%2CE_2">gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]</a></li>
           </ul></dd>
 <dt><a name="add" href="#add"><span>add:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -91,9 +91,7 @@ function main() {
           <li><a class="reference external"
           data-doc-search-tag="gram: add[N, E](graph: var Graph[N, E]; node: Node[N, E])" href="gram.html#add%2CGraph%5BN%2CE%5D%2CNode%5BN%2CE%5D">gram: add[N, E](graph: var Graph[N, E]; node: Node[N, E])</a></li>
           <li><a class="reference external"
-          data-doc-search-tag="gram: add[N, E](node: var Node[N, E]; edge: E; value: N)" href="gram.html#add%2CNode%5BN%2CE%5D%2CE%2CN">gram: add[N, E](node: var Node[N, E]; edge: E; value: N)</a></li>
-          <li><a class="reference external"
-          data-doc-search-tag="gram: add[N, E](node: var Node[N, E]; value: E; target: var Node[N, E])" href="gram.html#add%2CNode%5BN%2CE%5D%2CE%2CNode%5BN%2CE%5D">gram: add[N, E](node: var Node[N, E]; value: E; target: var Node[N, E])</a></li>
+          data-doc-search-tag="gram: add[N, E](graph: var Graph[N, E]; node: var Node[N, E]; value: E; target: var Node[N, E])" href="gram.html#add%2CGraph%5BN%2CE%5D%2CNode%5BN%2CE%5D%2CE%2CNode%5BN%2CE%5D">gram: add[N, E](graph: var Graph[N, E]; node: var Node[N, E]; value: E; target: var Node[N, E])</a></li>
           </ul></dd>
 <dt><a name="clear" href="#clear"><span>clear:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -107,6 +105,10 @@ function main() {
           <li><a class="reference external"
           data-doc-search-tag="gram: contains[N, E](graph: Graph[N, E]; value: N): bool" href="gram.html#contains%2CGraph%5BN%2CE%5D%2CN">gram: contains[N, E](graph: Graph[N, E]; value: N): bool</a></li>
           </ul></dd>
+<dt><a name="defaultGraphFlags" href="#defaultGraphFlags"><span>defaultGraphFlags:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: defaultGraphFlags" href="gram.html#defaultGraphFlags">gram: defaultGraphFlags</a></li>
+          </ul></dd>
 <dt><a name="del" href="#del"><span>del:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="gram: del[N, E](graph: var Graph[N, E]; node: Node[N, E])" href="gram.html#del%2CGraph%5BN%2CE%5D%2CNode%5BN%2CE%5D">gram: del[N, E](graph: var Graph[N, E]; node: Node[N, E])</a></li>
@@ -115,9 +117,17 @@ function main() {
           <li><a class="reference external"
           data-doc-search-tag="gram: del[N, E](node: var Node[N, E]; edge: Edge[N, E])" href="gram.html#del%2CNode%5BN%2CE%5D%2CEdge%5BN%2CE%5D">gram: del[N, E](node: var Node[N, E]; edge: Edge[N, E])</a></li>
           </ul></dd>
+<dt><a name="Directed" href="#Directed"><span>Directed:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.Directed" href="gram.html#Directed">GraphFlag.Directed</a></li>
+          </ul></dd>
 <dt><a name="Edge" href="#Edge"><span>Edge:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="gram: Edge" href="gram.html#Edge">gram: Edge</a></li>
+          </ul></dd>
+<dt><a name="edge" href="#edge"><span>edge:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: edge[N; E](e: Edge[N, E]): Edge[N, E]" href="gram.html#edge.t%2CEdge%5BN%2CE%5D">gram: edge[N; E](e: Edge[N, E]): Edge[N, E]</a></li>
           </ul></dd>
 <dt><a name="edges" href="#edges"><span>edges:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -128,6 +138,18 @@ function main() {
 <dt><a name="Graph" href="#Graph"><span>Graph:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="gram: Graph" href="gram.html#Graph">gram: Graph</a></li>
+          </ul></dd>
+<dt><a name="graph" href="#graph"><span>graph:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: graph[N; E](g: Graph[N, E]): Graph[N, E]" href="gram.html#graph.t%2CGraph%5BN%2CE%5D">gram: graph[N; E](g: Graph[N, E]): Graph[N, E]</a></li>
+          </ul></dd>
+<dt><a name="GraphFlag" href="#GraphFlag"><span>GraphFlag:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: GraphFlag" href="gram.html#GraphFlag">gram: GraphFlag</a></li>
+          </ul></dd>
+<dt><a name="GraphFlags" href="#GraphFlags"><span>GraphFlags:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: GraphFlags" href="gram.html#GraphFlags">gram: GraphFlags</a></li>
           </ul></dd>
 <dt><a name="hasKey" href="#hasKey"><span>hasKey:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -161,11 +183,15 @@ function main() {
           </ul></dd>
 <dt><a name="newGraph" href="#newGraph"><span>newGraph:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="gram: newGraph[N, E](): Graph[N, E]" href="gram.html#newGraph">gram: newGraph[N, E](): Graph[N, E]</a></li>
+          data-doc-search-tag="gram: newGraph[N, E](flags = defaultGraphFlags): Graph[N, E]" href="gram.html#newGraph">gram: newGraph[N, E](flags = defaultGraphFlags): Graph[N, E]</a></li>
           </ul></dd>
 <dt><a name="Node" href="#Node"><span>Node:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="gram: Node" href="gram.html#Node">gram: Node</a></li>
+          </ul></dd>
+<dt><a name="node" href="#node"><span>node:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="gram: node[N; E](n: Node[N, E]): Node[N, E]" href="gram.html#node.t%2CNode%5BN%2CE%5D">gram: node[N; E](n: Node[N, E]): Node[N, E]</a></li>
           </ul></dd>
 <dt><a name="outgoing" href="#outgoing"><span>outgoing:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -173,12 +199,32 @@ function main() {
           <li><a class="reference external"
           data-doc-search-tag="gram: outgoing[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], target: Node[N, E]]" href="gram.html#outgoing.i%2CNode%5BN%2CE%5D_2">gram: outgoing[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], target: Node[N, E]]</a></li>
           </ul></dd>
+<dt><a name="QueryResult" href="#QueryResult"><span>QueryResult:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.QueryResult" href="gram.html#QueryResult">GraphFlag.QueryResult</a></li>
+          </ul></dd>
+<dt><a name="Ultralight" href="#Ultralight"><span>Ultralight:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.Ultralight" href="gram.html#Ultralight">GraphFlag.Ultralight</a></li>
+          </ul></dd>
+<dt><a name="Undirected" href="#Undirected"><span>Undirected:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.Undirected" href="gram.html#Undirected">GraphFlag.Undirected</a></li>
+          </ul></dd>
+<dt><a name="UniqueEdges" href="#UniqueEdges"><span>UniqueEdges:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.UniqueEdges" href="gram.html#UniqueEdges">GraphFlag.UniqueEdges</a></li>
+          </ul></dd>
+<dt><a name="UniqueNodes" href="#UniqueNodes"><span>UniqueNodes:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="GraphFlag.UniqueNodes" href="gram.html#UniqueNodes">GraphFlag.UniqueNodes</a></li>
+          </ul></dd>
 </dl>
     <div class="row">
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2020-05-27 18:25:27 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2020-05-28 03:51:59 UTC</small>
       </div>
     </div>
   </div>
