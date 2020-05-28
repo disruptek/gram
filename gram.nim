@@ -391,16 +391,13 @@ proc contains*[N, E](graph: Graph[N, E]; value: N): bool {.example.} =
       result = true
       break
 
-proc contains[N, E](nodes: Nodes[N, E]; value: N): bool =
-  ## Returns `true` if `nodes` contains a node with the given `value`.
-  # XXX: reimpl using find()
-  {.warning: "not O(1) yet".}
-  for node in nodes.items:
-    if value == node.value:
-      result = true
-      break
-
 when false:
+  proc contains[N, E](nodes: Nodes[N, E]; value: N): bool =
+    ## Returns `true` if `nodes` contains a node with the given `value`.
+    # XXX: reimpl using find()
+    {.warning: "not O(1) yet".}
+    result = find(nodes, value) != nil
+
   proc add*[N, E](node: var Node[N, E]; edge: E; value: N) {.example.} =
     ## Add the `edge` between `node` and a new node of `value`.
     runnableExamples:
