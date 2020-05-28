@@ -17,4 +17,5 @@ proc execTest(test: string) =
     exec "nim cpp --gc:arc -d:danger -r " & test
 
 task test, "run tests for travis":
+  exec "nim doc --project --outdir:docs gram.nim"
   execTest("gram.nim")

@@ -10,9 +10,6 @@ Graph	gram.html#Graph	gram: Graph
 Node	gram.html#Node	gram: Node	
 Edge	gram.html#Edge	gram: Edge	
 defaultGraphFlags	gram.html#defaultGraphFlags	gram: defaultGraphFlags	
-graph	gram.html#graph.t,Graph[N,E]	gram: graph[N; E](g: Graph[N, E]): Graph[N, E]	
-node	gram.html#node.t,Node[N,E]	gram: node[N; E](n: Node[N, E]): Node[N, E]	
-edge	gram.html#edge.t,Edge[N,E]	gram: edge[N; E](e: Edge[N, E]): Edge[N, E]	
 newGraph	gram.html#newGraph	gram: newGraph[N, E](flags = defaultGraphFlags): Graph[N, E]	
 len	gram.html#len,Graph[N,E]	gram: len[N, E](graph: Graph[N, E]): int	
 add	gram.html#add,Graph[N,E],Node[N,E]	gram: add[N, E](graph: var Graph[N, E]; node: Node[N, E])	
