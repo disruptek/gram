@@ -28,9 +28,6 @@ query result might look like this:
 
 ]#
 
-const
-  boxingDay = false
-
 type
   GraphFlag* = enum
     QueryResult = "the graph only makes sense in relation to another graph"
@@ -78,31 +75,6 @@ type
     target: Node[N, E]
   Edges[N, E] = DoublyLinkedList[Edge[N, E]]
 
-when boxingDay:
-  type
-    UniBox[N, E] = object
-      graph: Graph[N, E]
-
-    NodeBox[N, E] = object
-      graph: Graph[N, E]
-      node: Node[N, E]
-
-    EdgeBox[N, E] = object
-      graph: Graph[N, E]
-      edge: Edge[N, E]
-
-    BiBox[N, E] = NodeBox[N, E] or EdgeBox[N, E]
-
-    TriBox[N, E] = object
-      graph: Graph[N, E]
-      node: Node[N, E]
-      edge: Edge[N, E]
-
-    AnyBox[N, E] = UniBox[N, E] or BiBox[N, E] or TriBox[N, E]
-
-    Edgey[N, E] = EdgeBox[N, E] or TriBox[N, E]
-    Nodey[N, E] = NodeBox[N, E] or TriBox[N, E]
-
 const
   defaultGraphFlags*: set[GraphFlag] = {Directed}
 
@@ -123,14 +95,9 @@ macro example(x: untyped): untyped =
             hint "fig. $1 for $2:" % [ $exampleCounter, $id ]
             hint indent(repr(node[1]), 4)
 
-when boxingDay:
-  template graph*[N, E](box: AnyBox[N, E]): Graph[N, E] = box.graph
-  template node*[N, E](box: Nodey[N, E]): Node[N, E] = box.node
-  template edge*[N, E](box: Edgey[N, E]): Edge[N, E] = box.edge
-else:
-  template graph*[N, E](g: Graph[N, E]): Graph[N, E] = g
-  template node*[N, E](n: Node[N, E]): Node[N, E] = n
-  template edge*[N, E](e: Edge[N, E]): Edge[N, E] = e
+template graph[N, E](g: Graph[N, E]): Graph[N, E] = g
+template node[N, E](n: Node[N, E]): Node[N, E] = n
+template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
 
 proc newNodes[N, E](): Nodes[N, E] =
   ## Create a new container for nodes.
@@ -145,14 +112,9 @@ proc newGraph*[N, E](flags = defaultGraphFlags): Graph[N, E] {.example.} =
   runnableExamples:
     var g = newGraph[int, string]()
 
-  when boxingDay:
-    result.graph = Graph[N, E](flags: flags)
-    result.graph.nodes = newNodes[N, E]()
-    result.graph.members = initIntSet()
-  else:
-    result = Graph[N, E](flags: flags)
-    result.nodes = newNodes[N, E]()
-    result.members = initIntSet()
+  result = Graph[N, E](flags: flags)
+  result.nodes = newNodes[N, E]()
+  result.members = initIntSet()
 
 proc `=destroy`[N, E](node: var NodeObj[N, E]) =
   ## Prepare a node for destruction.
@@ -208,21 +170,6 @@ proc embirth(graph: Graph; obj: var Edge) {.inline.} =
   ## Assign a unique identifier to a edge.
   obj.id = edgeId(obj, graph)
 
-when boxingDay:
-  proc nodeId(box: Nodey): int {.inline.} =
-    result = nodeId(node(box), graph(box))
-
-  proc edgeId(box: Edgey): int {.inline.} =
-    result = edgeId(edge(box), graph(box))
-
-  proc embirth[N, E](box: var Edgey) {.inline.} =
-    ## Assign a unique identifier to an edge.
-    edge(box).id = edgeId(box)
-
-  proc embirth[N, E](box: var Nodey) {.inline.} =
-    ## Assign a unique identifier to a node.
-    edge(box).id = nodeId(box)
-
 proc newNode[N, E](graph: var Graph[N, E]; value: N): Node[N, E] =
   ## Create a new node of the given `value`.
   result = Node[N, E](value: value,
@@ -231,15 +178,6 @@ proc newNode[N, E](graph: var Graph[N, E]; value: N): Node[N, E] =
   if UltraLight notin graph.flags:
     init(result)
   embirth(graph, result)
-
-when boxingDay:
-  proc newNode[N, E](box: var AnyBox[N, E]; value: N): Node[N, E] =
-    ## Create a new node of the given `value`.
-    result = newNode(graph(box), value)
-    raise
-
-  proc len*[N, E](box: Graph[N, E]): int {.inline.} =
-    result = len(graph(box))
 
 proc len*[N, E](graph: Graph[N, E]): int {.example.} =
   ## Return the number of nodes in a `graph`.
@@ -278,18 +216,6 @@ proc add*[N, E](graph: var Graph[N, E]; value: N) {.example.} =
   var
     node = newNode[N, E](graph, value)
   graph.add node
-
-when boxingDay:
-  proc add*[N, E](box: var AnyBox[N, E]; value: N) {.example.} =
-    ## Creates a new node of `value` and adds it to the `graph`.
-    runnableExamples:
-      var g = newGraph[int, string]()
-      g.add 3
-      assert len(g) == 1
-      g.add 9
-      assert len(g) == 2
-
-    graph(box).add value
 
 proc `[]`*[N, E](graph: var Graph[N, E]; key: N): var Node[N, E]
   {.example.} =
@@ -331,15 +257,6 @@ proc newEdge[N, E](graph: var Graph[N, E]; node: var Node[N, E];
   ## Create a new edge between `source` and `target` of the given `value`.
   result = Edge[N, E](source: node, value: value, target: target)
   embirth(graph, result)
-
-when boxingDay:
-  proc newEdge[N, E](box: Nodey[N, E]; value: E;
-                     target: Node[N, E]): TriBox[N, E] =
-    ## Create a new edge between `source` and `target` of the given `value`.
-    var
-      edge = Edge[N, E](source: node(box), value: value, target: target)
-    result = TriBox(graph: graph(box), node: node(box), edge: edge)
-    embirth(box, result)
 
 iterator outgoing*[N, E](node: var Node[N, E]):
   tuple[edge: var Edge[N, E], target: var Node[N, E]] =
@@ -419,14 +336,6 @@ proc add*[N, E](graph: var Graph[N, E]; node: var Node[N, E]; value: E;
   var
     edge = newEdge[N, E](graph, node, value, target)
   add(node, edge, target)
-
-when boxingDay:
-  proc add*[N, E](box: var Nodey[N, E]; value: E; target: var Node[N, E]) =
-    ## Link `node` to `target` via a new edge of `value`; O(1).
-    var
-      edge = newEdge[N, E](graph(box), node(box), value, target)
-    init(node(box))
-    add(node(box), edge, target)
 
 proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite (mutable) node.
