@@ -3,37 +3,39 @@ UniqueNodes	gram.html#UniqueNodes	GraphFlag.UniqueNodes
 UniqueEdges	gram.html#UniqueEdges	GraphFlag.UniqueEdges	
 Directed	gram.html#Directed	GraphFlag.Directed	
 Undirected	gram.html#Undirected	GraphFlag.Undirected	
+SelfLoops	gram.html#SelfLoops	GraphFlag.SelfLoops	
 Ultralight	gram.html#Ultralight	GraphFlag.Ultralight	
 GraphFlag	gram.html#GraphFlag	gram: GraphFlag	
-GraphFlags	gram.html#GraphFlags	gram: GraphFlags	
 Graph	gram.html#Graph	gram: Graph	
 Node	gram.html#Node	gram: Node	
 Edge	gram.html#Edge	gram: Edge	
+GraphFlags	gram.html#GraphFlags	gram: GraphFlags	
+EdgeResult	gram.html#EdgeResult	gram: EdgeResult	
 defaultGraphFlags	gram.html#defaultGraphFlags	gram: defaultGraphFlags	
-newGraph	gram.html#newGraph	gram: newGraph[N, E](flags = defaultGraphFlags): Graph[N, E]	
-len	gram.html#len,Graph[N,E]	gram: len[N, E](graph: Graph[N, E]): int	
-add	gram.html#add,Graph[N,E],Node[N,E]	gram: add[N, E](graph: var Graph[N, E]; node: Node[N, E])	
-add	gram.html#add,Graph[N,E],N	gram: add[N, E](graph: var Graph[N, E]; value: N)	
-`[]`	gram.html#[],Graph[N,E],N	gram: `[]`[N, E](graph: var Graph[N, E]; key: N): var Node[N, E]	
-clear	gram.html#clear,Graph[N,E]	gram: clear[N, E](graph: var Graph[N, E])	
+newGraph	gram.html#newGraph.t,typed	gram: newGraph[N; E](flags: typed): auto	
+newGraph	gram.html#newGraph.t	gram: newGraph[N; E](): auto	
+len	gram.html#len,Graph[N,E,F]	gram: len[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int	
+add	gram.html#add,Graph[N,E,F],Node[N,E]	gram: add[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; node: Node[N, E])	
+add	gram.html#add,Graph[N,E,F],N	gram: add[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; value: N)	
+contains	gram.html#contains,Graph[N,E,F],N	gram: contains[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]; value: N): bool	
+`[]`	gram.html#[],Graph[N,E,F],N	gram: `[]`[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; key: N): var Node[N, E]	
+clear	gram.html#clear,Graph[N,E,F]	gram: clear[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F])	
 outgoing	gram.html#outgoing.i,Node[N,E]	gram: outgoing[N, E](node: var Node[N, E]): tuple[edge: var Edge[N, E], target: var Node[N, E]]	
 outgoing	gram.html#outgoing.i,Node[N,E]_2	gram: outgoing[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], target: Node[N, E]]	
 incoming	gram.html#incoming.i,Node[N,E]	gram: incoming[N, E](node: var Node[N, E]): tuple[edge: var Edge[N, E], source: var Node[N, E]]	
 incoming	gram.html#incoming.i,Node[N,E]_2	gram: incoming[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], source: Node[N, E]]	
 neighbors	gram.html#neighbors.i,Node[N,E]	gram: neighbors[N, E](node: Node[N, E]): tuple[edge: Edge[N, E], node: Node[N, E]]	
-del	gram.html#del,Graph[N,E],Node[N,E]	gram: del[N, E](graph: var Graph[N, E]; node: Node[N, E])	
-add	gram.html#add,Graph[N,E],Node[N,E],E,Node[N,E]	gram: add[N, E](graph: var Graph[N, E]; node: var Node[N, E]; value: E; target: var Node[N, E])	
+del	gram.html#del,Graph[N,E,F],Node[N,E]	gram: del[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; node: Node[N, E])	
+add	gram.html#add,Graph[N,E,F],Node[N,E],E,Node[N,E]	gram: add[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; node: var Node[N, E]; value: E;\n                              target: var Node[N, E])	
 `[]`	gram.html#[],Node[N,E],E	gram: `[]`[N, E](node: var Node[N, E]; key: E): var Node[N, E]	
 isPeerOf	gram.html#isPeerOf,Node[N,E],Node[N,E]	gram: isPeerOf[N, E](node: Node[N, E]; target: Node[N, E]): bool	
-items	gram.html#items.i,Graph[N,E]	gram: items[N, E](graph: Graph[N, E]): Node[N, E]	
-contains	gram.html#contains,Graph[N,E],N	gram: contains[N, E](graph: Graph[N, E]; value: N): bool	
-edges	gram.html#edges.i,Graph[N,E]	gram: edges[N, E](graph: Graph[N, E]): tuple[source: Node[N, E], edge: Edge[N, E],\n                                   target: Node[N, E]]	
+items	gram.html#items.i,Graph[N,E,F]	gram: items[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E]	
+edges	gram.html#edges.i,Graph[N,E,F]	gram: edges[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): EdgeResult[N, E]	
 contains	gram.html#contains,Edge[N,E],N	gram: contains[N, E](edge: Edge[N, E]; value: N): bool	
 contains	gram.html#contains,Edge[N,E],Node[N,E]	gram: contains[N, E](edge: Edge[N, E]; node: Node[N, E]): bool	
 del	gram.html#del,Node[N,E],Edge[N,E]	gram: del[N, E](node: var Node[N, E]; edge: Edge[N, E])	
 del	gram.html#del,Node[N,E],E	gram: del[N, E](node: var Node[N, E]; value: E)	
 len	gram.html#len	gram: len[N, E](nodes: Nodes[N, E] | Edges[N, E]): int	
-hasKey	gram.html#hasKey,Node[N,E],E	gram: hasKey[N, E](node: Node[N, E]; key: E): bool	
+contains	gram.html#contains,Node[N,E],E	gram: contains[N, E](node: Node[N, E]; key: E): bool	
 `$`	gram.html#$	gram: `$`[N, E](thing: Node[N, E] | Edge[N, E]): string	
 `[]`	gram.html#[],Node[N,E],E_2	gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]	
-hasKey	gram.html#hasKey,Graph[N,E],N	gram: hasKey[N, E](graph: Graph[N, E]; key: N): bool	
