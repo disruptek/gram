@@ -183,10 +183,23 @@ proc nodeId(node: Node): int {.inline.} =
 proc hasLightNodes(flags: static[GraphFlags]): bool =
   result = {UniqueNodes, UltraLight} <= flags.toFlags
 
-proc nodeId[N, E, F](node: Node; graph: Graph[N, E, F]): int {.inline.} =
-  when F.hasLightNodes:
-    result = cast[int](node).abs
+proc lightId(item: Node | Edge): int32 =
+  when sizeof(item.value) > sizeof(int32):
+    raise
   else:
+    when item.value is set:
+      result = cast[int32](item.value)
+    elif item.value is Ordinal:
+      result = ord(item.value).int32
+    else:
+      raise
+
+proc nodeId[N; E, F](node: Node; graph: Graph[N, E, F]): int {.inline.} =
+  block:
+    when F.hasLightNodes:
+      when sizeof(N) <= sizeof(int32):
+        result = lightId(node)
+        break
     result = nodeId(node)
 
 proc edgeId(edge: Edge): int {.inline.} =
@@ -196,9 +209,11 @@ proc hasLightEdges(flags: static[GraphFlags]): bool =
   result = {UniqueEdges, UltraLight} <= flags.toFlags
 
 proc edgeId[N, E, F](edge: Edge; graph: Graph[N, E, F]): int {.inline.} =
-  when F.hasLightEdges:
-    result = cast[int](edge).abs
-  else:
+  block:
+    when F.hasLightEdges:
+      when sizeof(E) <= sizeof(int32):
+        result = lightId(edge)
+        break
     result = edgeId(edge)
 
 proc embirth(graph: Graph; obj: var Node) {.inline.} =
@@ -680,20 +695,56 @@ when isMainModule:
     cfg.budget = 1.0
 
     benchmark cfg:
+      type
+        AnN {.size: sizeof(int32).} = enum
+          NodeA
+          NodeB
+          NodeC
+          NodeD
+        AnE {.size: sizeof(int32).} = enum
+          Edge1
+          Edge2
+          Edge3
+
       var
         g = newGraph[int, int]()
         s = newGraph[int, int]({UniqueNodes, UniqueEdges, UltraLight})
+        q = newGraph[AnN, AnE]({UniqueNodes, UniqueEdges, UltraLight})
+        p = newGraph[set[AnN], AnE]({UniqueNodes, UniqueEdges, UltraLight})
+        r = newGraph[int32, AnE]({UniqueNodes, UniqueEdges, UltraLight})
       var
         g3 = g.add 3
         s3 = s.add 3
+        q3 = q.add NodeD
+        p3 = p.add {NodeA, NodeB}
+        p4 = p.add {NodeB, NodeC}
+        p5 = p.add {NodeD}
+        r3 = r.add 3
 
-      proc slow_birth() {.measure.} =
-        embirth(g, g3)
+      assert p3.value == {NodeA, NodeB}
+      assert p4.value == {NodeB, NodeC}
+      assert p5.value == {NodeD}
+      var
+        pe = p.edge(p3, Edge1, p4)
+      assert p3 in pe
+      assert p4 in pe
 
-      proc fast_birth() {.measure.} =
+      proc int_birth() {.measure.} =
         embirth(s, s3)
 
+      proc enum_birth() {.measure.} =
+        embirth(q, q3)
+
+      proc set_birth() {.measure.} =
+        embirth(p, p3)
+
+      proc int32_birth() {.measure.} =
+        embirth(r, r3)
+
       when "" != getEnv "TRAVIS_BUILD_DIR":
+        proc slow_birth() {.measure.} =
+          embirth(g, g3)
+
         proc slow_add() {.measure.} =
           add(g, 1)
 
