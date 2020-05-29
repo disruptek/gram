@@ -29,7 +29,7 @@ query result might look like this:
 ]#
 
 type
-  GraphFlag* = enum
+  GraphFlag* {.size: sizeof(int).} = enum
     QueryResult = "the graph only makes sense in relation to another graph"
     UniqueNodes = "the nodes in the graph all have unique values"
     UniqueEdges = "the edges in the graph all have unique values"
@@ -37,6 +37,10 @@ type
     Undirected  = "edges have identical semantics for source and target"
     SelfLoops   = "nodes may have edges that target themselves"
     Ultralight  = "the graph is even lighter"
+
+  EdgeFlag {.size: sizeof(int).} = enum
+    Incoming
+    Outgoing
 
   GraphObj[N, E; F: static[int]] = object
     nodes: Nodes[N, E]
@@ -61,7 +65,7 @@ type
     edges: IntSet
     peers: IntSet
     initialized: bool
-  Nodes[N, E] = DoublyLinkedList[Node[N, E]]
+  Nodes[N, E] = distinct DoublyLinkedList[Node[N, E]]
 
   Edge*[N, E] = ref EdgeObj[N, E]                            ##
   ## An edge connects two nodes.
@@ -73,7 +77,7 @@ type
     id: int
     source: Node[N, E]
     target: Node[N, E]
-  Edges[N, E] = DoublyLinkedList[Edge[N, E]]
+  Edges[N, E] = distinct DoublyLinkedList[Edge[N, E]]
 
   GraphFlags* = int
 
@@ -82,15 +86,25 @@ type
     edge: Edge[N, E]
     target: Node[N, E]
 
-converter toFlags(flags: static[set[GraphFlag]]): GraphFlags {.compileTime.} =
-  for flag in items(flags):
-    result = `or`(result, (1 shl flag.ord))
+converter toInt(flags: static[set[GraphFlag]]): GraphFlags =
+  # the vm cannot cast between set and int
+  when nimvm:
+    for flag in items(flags):
+      result = `or`(result, 1 shl flag.ord)
+  else:
+    result = cast[int](flags)
 
-proc contains(flag: GraphFlags; flags: static[set[GraphFlag]]): bool =
-  result = `and`(flag, toFlags(flags)) == flag
+converter toFlags(value: int): set[GraphFlag] =
+  # the vm cannot cast between set and int
+  when nimvm:
+    for flag in items(GraphFlag):
+      if `and`(value, 1 shl flag.ord) != 0:
+        result.incl flag
+  else:
+    result = cast[set[GraphFlag]](value)
 
 const
-  defaultGraphFlags* = {Directed}
+  defaultGraphFlags* = {Directed, SelfLoops}
 
 # just a hack to output the example numbers during docgen...
 when defined(nimdoc):
@@ -115,11 +129,11 @@ template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
 
 proc newNodes[N, E](): Nodes[N, E] =
   ## Create a new container for nodes.
-  result = initDoublyLinkedList[Node[N, E]]()
+  result = Nodes[N, E] initDoublyLinkedList[Node[N, E]]()
 
 proc newEdges[N, E](): Edges[N, E] =
   ## Create a new container for edges.
-  result = initDoublyLinkedList[Edge[N, E]]()
+  result = Edges[N, E] initDoublyLinkedList[Edge[N, E]]()
 
 template newGraph*[N, E](flags: typed): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
@@ -129,7 +143,7 @@ template newGraph*[N, E](flags: typed): auto =
 
   block:
     var
-      result = Graph[N, E, toFlags(flags)]()
+      result = Graph[N, E, toInt(flags)]()
     result.nodes = newNodes[N, E]()
     result.members = initIntSet()
     result
@@ -154,8 +168,11 @@ proc `=destroy`[N, E](edge: var EdgeObj[N, E]) =
   # just, really fuck this thing up
   edge.id = 0
 
-proc init[N, E](node: var Node[N, E]) {.inline.} =
+proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) {.inline.} =
+  ## Initialize a `node` for use in the graph.
   if not node.initialized:
+    node.incoming = newEdges[N, E]()
+    node.outgoing = newEdges[N, E]()
     node.edges = initIntSet()
     node.peers = initIntSet()
     node.initialized = true
@@ -164,7 +181,7 @@ proc nodeId(node: Node): int {.inline.} =
   result = getMonoTime().ticks.int
 
 proc hasLightNodes(flags: static[GraphFlags]): bool =
-  result = {UniqueNodes, UltraLight} in flags
+  result = {UniqueNodes, UltraLight} <= flags.toFlags
 
 proc nodeId[N, E, F](node: Node; graph: Graph[N, E, F]): int {.inline.} =
   when F.hasLightNodes:
@@ -176,7 +193,7 @@ proc edgeId(edge: Edge): int {.inline.} =
   result = getMonoTime().ticks.int
 
 proc hasLightEdges(flags: static[GraphFlags]): bool =
-  result = {UniqueEdges, UltraLight} in flags
+  result = {UniqueEdges, UltraLight} <= flags.toFlags
 
 proc edgeId[N, E, F](edge: Edge; graph: Graph[N, E, F]): int {.inline.} =
   when F.hasLightEdges:
@@ -194,52 +211,97 @@ proc embirth(graph: Graph; obj: var Edge) {.inline.} =
 
 proc newNode[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; value: N): Node[N, E] =
   ## Create a new node of the given `value`.
-  result = Node[N, E](value: value,
-                      incoming: newEdges[N, E](),
-                      outgoing: newEdges[N, E]())
+  result = Node[N, E](value: value)
   when not F.hasLightNodes:
-    init(result)
+    graph.init(result)
   embirth(graph, result)
 
 proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.example.} =
-  ## Return the number of nodes in a `graph`.
+  ## Return the number of nodes in a `graph`.  O(1).
   runnableExamples:
     var g = newGraph[int, string]()
     assert len(g) == 0
 
   result = len(graph.members)
 
-proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       node: Node[N, E]) {.example.} =
-  ## Adds a `node` to the `graph`.  Has no effect if the `node` is already
-  ## in the `graph`.
+iterator nodes[N, E](list: var Edges[N, E]): DoublyLinkedNode[Edge[N, E]] =
+  for item in nodes(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator nodes[N, E](list: var Nodes[N, E]): DoublyLinkedNode[Node[N, E]] =
+  for item in nodes(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+iterator mitems[N, E](list: var Edges[N, E]): var Edge[N, E] =
+  for item in mitems(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator mitems[N, E](list: var Nodes[N, E]): var Node[N, E] =
+  for item in mitems(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+iterator items[N, E](list: Edges[N, E]): Edge[N, E] =
+  for item in items(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator items[N, E](list: Nodes[N, E]): Node[N, E] =
+  for item in items(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+proc append[N, E](list: var Nodes[N, E]; value: Node[N, E]) =
+  append(DoublyLinkedList[Node[N, E]] list, newDoublyLinkedNode(value))
+
+proc append[N, E](list: var Edges[N, E]; value: Edge[N, E]) =
+  append(DoublyLinkedList[Edge[N, E]] list, newDoublyLinkedNode(value))
+
+proc remove[N, E](list: var Edges[N, E]; node: Edge[N, E]) =
+  ## Remove an edge from container.
+  for item in nodes(list):
+    if item.value.id == node.id:
+      remove(DoublyLinkedList[Edge[N, E]] list, item)
+
+proc remove[N, E](list: var Nodes[N, E]; node: Node[N, E]) =
+  ## Remove a node from container.
+  for item in nodes(list):
+    if item.value.id == node.id:
+      remove(DoublyLinkedList[Node[N, E]] list, item)
+
+proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
+                                        edge: Edge[N, E]) {.example.} =
+  ## Includes an `edge` in the `graph`.  Has no effect if the `edge` is
+  ## already in the `graph`.  O(1).
+  discard
+
+proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
+                                        node: Node[N, E]) {.example.} =
+  ## Includes a `node` in the `graph`.  Has no effect if the `node` is
+  ## already in the `graph`.  O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    let n = g[3]
+    let n = g.add 3
 
     var q = newGraph[int, string]()
-    q.add n
-    q.add n
+    q.incl n
+    q.incl n
     assert len(q) == 1
 
   if node.id notin graph.members:
-    append(graph.nodes, newDoublyLinkedNode(node))
+    append(graph.nodes, node)
     incl graph.members, node.id
 
 proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       value: N) {.example.} =
+                                       value: N): Node[N, E] {.example.} =
   ## Creates a new node of `value` and adds it to the `graph`.
+  ## Returns the new node.  O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
+    discard g.add 3
     assert len(g) == 1
-    g.add 9
+    discard g.add 9
     assert len(g) == 2
 
-  var
-    node = newNode(graph, value)
-  graph.add node
+  result = newNode(graph, value)
+  graph.incl result
 
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
                                             value: N): bool {.example.} =
@@ -247,7 +309,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
   ## Not yet O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
+    discard g.add 3
     assert 3 in g
 
   for node in items(graph):
@@ -261,7 +323,7 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   ## Index a mutable `graph` to retrieve a mutable node of value `key`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
+    discard g.add 3
     assert g[3].value == 3
 
   block found:
@@ -275,14 +337,14 @@ proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
   ## Empty a `graph` of all nodes and edges.
   clear(graph.members)
   for item in nodes(graph.nodes):
-    remove(graph.nodes, item)
+    remove(DoublyLinkedList[Node[N, E]] graph.nodes, item)
 
 proc clear*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F])
   {.example.} =
   ## Empty a `graph` of all nodes and edges.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
+    discard g.add 3
     clear(g)
     assert len(g) == 0
 
@@ -339,69 +401,59 @@ proc del*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   ## Not O(1) yet.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    let n = g[3]
+    let n = g.add 3
     g.del n
     assert len(g) == 0
 
   if node.id in graph.members:
-    for item in nodes(graph.nodes):
-      if item.value.id == node.id:
-        remove(graph.nodes, item)
-        excl graph.members, item.value.id
-        break
+    remove(graph.nodes, node)
+    excl graph.members, node.id
 
-proc append[N, E](nodes: var Nodes[N, E]; value: N) =
-  ## Append a new node of `value` to the `nodes` container; O(1).
-  var
-    node = newNode[N, E](value)
-  nodes.append newDoublyLinkedNode(node)
-
-proc add[N, E](node: var Node[N, E]; edge: Edge[N, E]; target: var Node[N, E]) =
+proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Link `node` to `target` via `edge`; O(1).
   if edge.id notin node.edges:
-    append(node.outgoing, newDoublyLinkedNode(edge))
-    incl node.peers, target.id
+    # ensure we only execute this once per node/edge
     incl node.edges, edge.id
-    append(target.incoming, newDoublyLinkedNode(edge))
-    incl target.peers, node.id
-    incl target.edges, edge.id
+    # if this is the source node,
+    if edge.source.id == node.id:
+      # it's an outgoing edge,
+      append(node.outgoing, edge)
+      # and we'll ensure it's in our peers
+      incl node.peers, edge.target.id
+    # if this is the target node,
+    if edge.target.id == node.id:
+      # it's an incoming edge,
+      append(node.incoming, edge)
+      # and we'll ensure it's in our peers
+      incl node.peers, edge.source.id
+    # connect the other end of the edge as well
+    incl edge.target, edge
 
-proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       node: var Node[N, E]; value: E;
-                                       target: var Node[N, E]) {.example.} =
+proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
+                                        node: var Node[N, E]; value: E;
+                                        target: var Node[N, E]): Edge[N, E]
+  {.example.} =
   ## Link `node` to `target` via a new edge of `value`; O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 27
-    g.add(g[3], "cubed", g[27])
+    discard g.add 3
+    discard g.add 27
+    let e = g.edge(g[3], "cubed", g[27])
+    assert e.value == "cubed"
+    assert g[3] in e
+    assert g[27] in e
 
-  var
-    edge = newEdge(graph, node, value, target)
-  add(node, edge, target)
-
-when false:
-  proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                         node: var Node[N, E]; edge: E;
-                                         value: N) {.example.} =
-    ## Link `node` to new node of `value` via a new edge of `edge`; O(1).
-    runnableExamples:
-      var g = newGraph[int, string]()
-      g.add 3
-      g.add(g[3], "cubed", 27)
-
-    var
-      target = newNode(graph, value)
-    add(graph, node, edge, target)
+  result = newEdge(graph, node, value, target)
+  graph.incl result
+  node.incl result
 
 proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite (mutable) node.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    let squared = g.edge(g[3], "squared", g[9])
     let n9 = g[3]["squared"]
     assert n9.value == 9
 
@@ -413,15 +465,16 @@ proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
     raise newException(KeyError, "edge not found: " & $key)
 
 # XXX: needs a better name
-proc isPeerOf*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
+proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
   ## Returns `true` if `node` shares an edge with `target`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
-    assert g[3].isPeerOf g[9]
-    assert g[9].isPeerOf g[3]
+    var
+      g3 = g.add 3
+      g9 = g.add 9
+    assert not peers(g9, g3)
+    discard g.edge(g3, "squared", g9)
+    assert peers(g3, g9)
 
   result = node.id in target.peers or target.id in node.peers
 
@@ -429,11 +482,11 @@ iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] 
   ## Yield each node in the `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
+    discard g.add 3
     for node in items(g):
       assert node.value == 3
 
-  for node in lists.items(graph.nodes):
+  for node in items(graph.nodes):
     yield node
 
 iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
@@ -441,9 +494,9 @@ iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
   ## Yield `source` node, `edge`, and `target` node from a `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     for source, edge, target in edges(g):
       assert edge.value == "squared"
       assert source.value == 3
@@ -467,9 +520,9 @@ proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.example.} =
   ## else `false`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     let n = g[9]
     for source, edge, target in g.edges:
       assert 9 in edge
@@ -482,20 +535,14 @@ proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.example.} =
   ## else `false`.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     for source, edge, target in g.edges:
       assert source in edge
       assert target in edge
 
   result = node.id in [edge.source.id, edge.target.id]
-
-proc remove[N, E](edges: var Edges[N, E]; edge: Edge[N, E]) =
-  ## Remove an edge from container.
-  for item in nodes(edges):
-    if item.value.id == edge.id:
-      remove(edges, item)
 
 proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Remove `edge` from `node`.  Of course, this also removes
@@ -522,13 +569,13 @@ proc del*[N, E](node: var Node[N, E]; value: E) {.example.} =
   ## Not O(1) yet; indeed, it is relatively slow!
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     var
       n9 = g[3]["squared"]
     n9.del "squared"
-    assert not g[3].isPeerOf n9
+    assert not peers(g[3], n9)
 
   for edge in nodes(node.outgoing):
     if edge.value.value == value:
@@ -553,9 +600,9 @@ proc contains*[N, E](node: Node[N, E]; key: E): bool {.example.} =
   ## Not yet O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     assert "squared" in g[3]
 
   block found:
@@ -580,9 +627,9 @@ proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite node.
   runnableExamples:
     var g = newGraph[int, string]()
-    g.add 3
-    g.add 9
-    g.add(g[3], "squared", g[9])
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
     let
       l3 = g[3]
       l9 = g[3]["squared"]
@@ -603,9 +650,9 @@ when false:
   proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool =
     runnableExamples:
       var g = newGraph[int, string]()
-      g.add 3
-      g.add 9
-      g.add(g[3], "squared", g[9])
+      discard g.add 3
+      discard g.add 9
+      discard g.edge(g[3], "squared", g[9])
       assert g[3] -> g[9]
 
     if target.id in node.peers:
@@ -620,7 +667,7 @@ when isMainModule:
   import criterion
 
   const
-    dgf = toFlags(defaultGraphFlags)
+    dgf = toInt(defaultGraphFlags)
   echo "graph object size ", sizeof(GraphObj[int, string, dgf])
   echo "node object size ", sizeof(NodeObj[int, string])
   echo "edge object size ", sizeof(EdgeObj[int, string])
@@ -635,12 +682,10 @@ when isMainModule:
     benchmark cfg:
       var
         g = newGraph[int, int]()
-        s = newGraph[int, int]({UltraLight})
-      g.add 3
-      s.add 3
+        s = newGraph[int, int]({UniqueNodes, UniqueEdges, UltraLight})
       var
-        g3 = g[3]
-        s3 = s[3]
+        g3 = g.add 3
+        s3 = s.add 3
 
       proc slow_birth() {.measure.} =
         embirth(g, g3)
