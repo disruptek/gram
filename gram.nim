@@ -282,7 +282,7 @@ proc remove[N, E](list: var Nodes[N, E]; node: Node[N, E]) =
       remove(DoublyLinkedList[Node[N, E]] list, item)
 
 proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                        edge: Edge[N, E]) {.example.} =
+                                       edge: Edge[N, E]) {.example.} =
   ## Includes an `edge` in the `graph`.  Has no effect if the `edge` is
   ## already in the `graph`.  O(1).
   discard
