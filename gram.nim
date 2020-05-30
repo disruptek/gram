@@ -121,6 +121,58 @@ proc newEdges[N, E](): Edges[N, E] =
   ## Create a new container for edges.
   result = Edges[N, E] initDoublyLinkedList[Edge[N, E]]()
 
+iterator nodes[N, E](list: var Edges[N, E]): DoublyLinkedNode[Edge[N, E]] =
+  for item in nodes(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator nodes[N, E](list: var Nodes[N, E]): DoublyLinkedNode[Node[N, E]] =
+  for item in nodes(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+iterator mitems[N, E](list: var Edges[N, E]): var Edge[N, E] =
+  for item in mitems(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator mitems[N, E](list: var Nodes[N, E]): var Node[N, E] =
+  for item in mitems(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+iterator items[N, E](list: Edges[N, E]): Edge[N, E] =
+  for item in items(DoublyLinkedList[Edge[N, E]] list):
+    yield item
+
+iterator items[N, E](list: Nodes[N, E]): Node[N, E] =
+  for item in items(DoublyLinkedList[Node[N, E]] list):
+    yield item
+
+proc append[N, E](list: var Nodes[N, E]; value: Node[N, E]) =
+  append(DoublyLinkedList[Node[N, E]] list, newDoublyLinkedNode(value))
+
+proc append[N, E](list: var Edges[N, E]; value: Edge[N, E]) =
+  append(DoublyLinkedList[Edge[N, E]] list, newDoublyLinkedNode(value))
+
+proc remove[N, E](list: var Edges[N, E]; node: Edge[N, E]) =
+  ## Remove an edge from container.
+  for item in nodes(list):
+    if item.value.id == node.id:
+      remove(DoublyLinkedList[Edge[N, E]] list, item)
+
+proc remove[N, E](list: var Nodes[N, E]; node: Node[N, E]) =
+  ## Remove a node from container.
+  for item in nodes(list):
+    if item.value.id == node.id:
+      remove(DoublyLinkedList[Node[N, E]] list, item)
+
+proc clear[N, E](list: var Edges[N, E]) =
+  ## Remove all edges from container.
+  for item in nodes(list):
+    remove(DoublyLinkedList[Edge[N, E]] list, item)
+
+proc clear[N, E](list: var Nodes[N, E]) =
+  ## Remove all nodes from container.
+  for item in nodes(list):
+    remove(DoublyLinkedList[Node[N, E]] list, item)
+
 template newGraph*[N, E](flags: typed): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
   runnableExamples:
@@ -140,10 +192,8 @@ proc `=destroy`[N, E](node: var NodeObj[N, E]) =
   ## Prepare a node for destruction.
   clear(node.edges)
   clear(node.peers)
-  for item in nodes(node.incoming):
-    remove(node.incoming, item)
-  for item in nodes(node.outgoing):
-    remove(node.outgoing, item)
+  clear(node.incoming)
+  clear(node.outgoing)
   # just, really fuck this thing up
   node.id = 0
 
@@ -224,48 +274,6 @@ proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.example.} =
     assert len(g) == 0
 
   result = len(graph.members)
-
-iterator nodes[N, E](list: var Edges[N, E]): DoublyLinkedNode[Edge[N, E]] =
-  for item in nodes(DoublyLinkedList[Edge[N, E]] list):
-    yield item
-
-iterator nodes[N, E](list: var Nodes[N, E]): DoublyLinkedNode[Node[N, E]] =
-  for item in nodes(DoublyLinkedList[Node[N, E]] list):
-    yield item
-
-iterator mitems[N, E](list: var Edges[N, E]): var Edge[N, E] =
-  for item in mitems(DoublyLinkedList[Edge[N, E]] list):
-    yield item
-
-iterator mitems[N, E](list: var Nodes[N, E]): var Node[N, E] =
-  for item in mitems(DoublyLinkedList[Node[N, E]] list):
-    yield item
-
-iterator items[N, E](list: Edges[N, E]): Edge[N, E] =
-  for item in items(DoublyLinkedList[Edge[N, E]] list):
-    yield item
-
-iterator items[N, E](list: Nodes[N, E]): Node[N, E] =
-  for item in items(DoublyLinkedList[Node[N, E]] list):
-    yield item
-
-proc append[N, E](list: var Nodes[N, E]; value: Node[N, E]) =
-  append(DoublyLinkedList[Node[N, E]] list, newDoublyLinkedNode(value))
-
-proc append[N, E](list: var Edges[N, E]; value: Edge[N, E]) =
-  append(DoublyLinkedList[Edge[N, E]] list, newDoublyLinkedNode(value))
-
-proc remove[N, E](list: var Edges[N, E]; node: Edge[N, E]) =
-  ## Remove an edge from container.
-  for item in nodes(list):
-    if item.value.id == node.id:
-      remove(DoublyLinkedList[Edge[N, E]] list, item)
-
-proc remove[N, E](list: var Nodes[N, E]; node: Node[N, E]) =
-  ## Remove a node from container.
-  for item in nodes(list):
-    if item.value.id == node.id:
-      remove(DoublyLinkedList[Node[N, E]] list, item)
 
 proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                        edge: Edge[N, E]) {.example.} =
