@@ -14,20 +14,6 @@ import std/macros
 ## - Perfect is the enemy of Good.
 ##
 
-#[
-
-two classes of graph:
-
-1. graphs that you made that have your data in them
-2. graphs that are a by-product of a query
-
-query result might look like this:
-
-  type
-    SubGraph[Node[N, E].id, Edge[N, E].id] =
-
-]#
-
 type
   GraphFlag* {.size: sizeof(int).} = enum
     QueryResult = "the graph only makes sense in relation to another graph"
@@ -479,7 +465,6 @@ proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
         break found
     raise newException(KeyError, "edge not found: " & $key)
 
-# XXX: needs a better name
 proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
   ## Returns `true` if `node` shares an edge with `target`.
   runnableExamples:
@@ -696,15 +681,8 @@ when isMainModule:
 
     benchmark cfg:
       type
-        AnN {.size: sizeof(int32).} = enum
-          NodeA
-          NodeB
-          NodeC
-          NodeD
-        AnE {.size: sizeof(int32).} = enum
-          Edge1
-          Edge2
-          Edge3
+        AnN {.size: sizeof(int32).} = enum NodeA, NodeB, NodeC, NodeD
+        AnE {.size: sizeof(int32).} = enum Edge1, Edge2, Edge3
 
       var
         g = newGraph[int, int]()
