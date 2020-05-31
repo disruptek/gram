@@ -3,6 +3,7 @@ import std/monotimes
 import std/lists
 import std/intsets
 import std/macros
+import std/hashes
 
 ##
 ## Goals
@@ -523,15 +524,26 @@ proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
 
   result = node.id in target.peers or target.id in node.peers
 
-iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.example.} =
+iterator nodes*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.example.} =
   ## Yield each node in the `graph`.
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    for node in nodes(g):
+      assert node.value == 3
+
+  for node in items(graph.nodes):
+    yield node
+
+iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.example.} =
+  ## Alias for `nodes(graph)` iterator.
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
     for node in items(g):
       assert node.value == 3
 
-  for node in items(graph.nodes):
+  for node in nodes(graph):
     yield node
 
 iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
@@ -691,6 +703,38 @@ proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.example.} =
         result = edge.target
         break found
     raise newException(KeyError, "edge not found: " & $key)
+
+proc hash(intset: IntSet): Hash =
+  ## Produce a `Hash` for an IntSet.
+  var h: Hash = 0
+  for value in items(intset):
+    h = h !& hash(value)
+  result = !$h
+
+proc hash*[N, E](node: Node[N, E]): Hash =
+  ## Produce a `Hash` that uniquely identifies the `node` and varies with
+  ## changes to its neighborhood.
+  var h: Hash = 0
+  h = h !& hash(node.id)
+  h = h !& hash(node.edges)
+  h = h !& hash(node.peers)
+  result = !$h
+
+proc hash*[N, E](edge: Edge[N, E]): Hash =
+  ## Produce a `Hash` that uniquely identifies the `edge`.
+  var h: Hash = 0
+  h = h !& hash(edge.id)
+  result = !$h
+
+proc hash*[N, E, F](graph: Graph[N, E, F]): Hash =
+  ## Produce a `Hash` that uniquely identifies the `graph` based upon its
+  ## contents.
+  var h: Hash = 0
+  for node in nodes(graph):
+    h = h !& hash(node)
+  for edge in edges(graph):
+    h = h !& hash(edge)
+  result = !$h
 
 when false:
   proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool =
