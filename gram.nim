@@ -552,7 +552,7 @@ iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
   var
     seen = initIntSet()
 
-  for node in graph.items:
+  for node in items(graph):
     for edge, target in outgoing(node):
       if edge.id notin seen:
         incl seen, edge.id
