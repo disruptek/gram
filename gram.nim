@@ -558,18 +558,19 @@ proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Not O(1) yet; indeed, it is relatively slow!
 
   # leave this in a single proc so it's harder to screw up
-  if edge.id in node.edges:
-    # remove the source side
-    remove(edge.source.incoming, edge)
-    remove(edge.source.outgoing, edge)
-    excl(edge.source.edges, edge.id)
-    excl(edge.source.peers, edge.target.id)
-    # we can skip removing the target side if this is a "loop"
-    if edge.target.id != edge.source.id:
-      remove(edge.target.incoming, edge)
-      remove(edge.target.outgoing, edge)
-      excl(edge.target.edges, edge.id)
-      excl(edge.target.peers, edge.source.id)
+  if node.initialized:
+    if edge.id in node.edges:
+      # remove the source side
+      remove(edge.source.incoming, edge)
+      remove(edge.source.outgoing, edge)
+      excl(edge.source.edges, edge.id)
+      excl(edge.source.peers, edge.target.id)
+      # we can skip removing the target side if this is a "loop"
+      if edge.target.id != edge.source.id:
+        remove(edge.target.incoming, edge)
+        remove(edge.target.outgoing, edge)
+        excl(edge.target.edges, edge.id)
+        excl(edge.target.peers, edge.source.id)
 
 proc del*[N, E](node: var Node[N, E]; value: E) {.example.} =
   ## Remove edge with value `value` from `node`. Of course, this also
