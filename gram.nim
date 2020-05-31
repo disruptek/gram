@@ -455,12 +455,10 @@ proc node*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   ## Create a new node compatible with `graph`; O(1).
   runnableExamples:
     var g = newGraph[int, string]()
-    g.incl g.node(3)
-    g.incl g.node(27)
-    let e = g.edge(g[3], "cubed", g[27])
-    assert e.value == "cubed"
-    assert g[3] in e
-    assert g[27] in e
+    var n = g.node(3)
+    assert len(g) == 0
+    g.incl n
+    assert len(g) == 1
 
   result = newNode(graph, value)
 
