@@ -398,10 +398,10 @@ iterator incoming*[N, E](node: Node[N, E]):
 iterator neighbors*[N, E](node: Node[N, E]):
   tuple[edge: Edge[N, E], node: Node[N, E]] =
   ## Yield `edge` and target `node` from a node.
-  for edge, node in node.outgoing:
-    yield (edge: edge, node: node)
-  for edge, node in node.incoming:
-    yield (edge: edge, node: node)
+  for edge, via in outgoing(node):
+    yield (edge: edge, node: via)
+  for edge, via in incoming(node):
+    yield (edge: edge, node: via)
 
 proc del*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                        node: Node[N, E]) {.example.} =
