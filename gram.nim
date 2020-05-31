@@ -206,6 +206,7 @@ proc `=destroy`[N, E](edge: var EdgeObj[N, E]) =
 
 proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) {.inline.} =
   ## Initialize a `node` for use in the graph.
+  assert node != nil
   if not node.initialized:
     node.incoming = newEdges[N, E]()
     node.outgoing = newEdges[N, E]()
@@ -279,7 +280,8 @@ proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                        edge: Edge[N, E]) {.example.} =
   ## Includes an `edge` in the `graph`.  Has no effect if the `edge` is
   ## already in the `graph`.  O(1).
-  discard
+  assert graph != nil
+  assert edge != nil
 
 proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         node: Node[N, E]) {.example.} =
@@ -294,6 +296,7 @@ proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     q.incl n
     assert len(q) == 1
 
+  assert graph != nil
   if node.id notin graph.members:
     append(graph.nodes, node)
     incl graph.members, node.id
@@ -368,6 +371,9 @@ proc newEdge[N, E;
                                     node: var Node[N, E]; value: E;
                                     target: var Node[N, E]): Edge[N, E] =
   ## Create a new edge between `source` and `target` of the given `value`.
+  assert graph != nil
+  assert node != nil
+  assert target != nil
   result = Edge[N, E](source: node, value: value, target: target)
   embirth(graph, result)
 
@@ -420,6 +426,11 @@ proc del*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
 
 proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Link `node` to `target` via `edge`; O(1).
+  assert node != nil
+  assert edge != nil
+  assert edge.target != nil
+  assert edge.source != nil
+  assert node.initialized
   if edge.id notin node.edges:
     # ensure we only execute this once per node/edge
     incl node.edges, edge.id
@@ -438,6 +449,21 @@ proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
     # connect the other end of the edge as well
     incl edge.target, edge
 
+proc node*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
+                                        value: N): Node[N, E]
+  {.example.} =
+  ## Create a new node compatible with `graph`; O(1).
+  runnableExamples:
+    var g = newGraph[int, string]()
+    g.incl g.node(3)
+    g.incl g.node(27)
+    let e = g.edge(g[3], "cubed", g[27])
+    assert e.value == "cubed"
+    assert g[3] in e
+    assert g[27] in e
+
+  result = newNode(graph, value)
+
 proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         node: var Node[N, E]; value: E;
                                         target: var Node[N, E]): Edge[N, E]
@@ -452,9 +478,22 @@ proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     assert g[3] in e
     assert g[27] in e
 
+  assert node != nil
+  assert target != nil
+
+  # ensure the node and target are prepared to add an edge
+  graph.init node
+  graph.init target
+
+  # create the edge
   result = newEdge(graph, node, value, target)
+
+  # include the edge in the graph
   graph.incl result
+
+  # include the edge in the node and target
   node.incl result
+  target.incl result
 
 proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite (mutable) node.
@@ -684,6 +723,7 @@ when isMainModule:
   when not defined(danger):
     echo "build with -d:danger to run benchmarks"
   else:
+    echo "this'll take something on the order of 30s..."
     var cfg = newDefaultConfig()
     cfg.brief = true
     cfg.budget = 1.0
