@@ -4,6 +4,7 @@ import std/lists
 import std/intsets
 import std/macros
 import std/hashes
+import std/sets
 
 ##
 ## Goals
@@ -206,7 +207,7 @@ proc `=destroy`[N, E](edge: var EdgeObj[N, E]) =
   edge.id = 0
 
 proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) {.inline.} =
-  ## Initialize a `node` for use in the graph.
+  ## Initialize a `node` for use in the `graph`.
   assert node != nil
   if not node.initialized:
     node.incoming = newEdges[N, E]()
@@ -218,7 +219,7 @@ proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) {.inline.} =
 proc nodeId(node: Node): int {.inline.} =
   result = getMonoTime().ticks.int
 
-proc hasLightNodes(flags: static[GraphFlags]): bool =
+proc hasLightNodes(flags: static[GraphFlags]): bool {.compileTime.} =
   result = {UniqueNodes, UltraLight} <= flags.toFlags
 
 proc lightId(item: Node | Edge): int32 =
@@ -325,8 +326,8 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
     discard g.add 3
     assert 3 in g
 
-  for node in items(graph):
-    if value == node.value:
+  for item in items(graph):
+    if value == item:
       result = true
       break
 
@@ -535,16 +536,16 @@ iterator nodes*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] 
   for node in items(graph.nodes):
     yield node
 
-iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.example.} =
-  ## Alias for `nodes(graph)` iterator.
+iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): N {.example.} =
+  ## Yield the values of nodes in the `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
-    for node in items(g):
-      assert node.value == 3
+    for value in items(g):
+      assert value == 3
 
   for node in nodes(graph):
-    yield node
+    yield node.value
 
 iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
   EdgeResult[N, E] {.example.} =
@@ -562,7 +563,7 @@ iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
   var
     seen = initIntSet()
 
-  for node in items(graph):
+  for node in nodes(graph):
     for edge, target in outgoing(node):
       if edge.id notin seen:
         incl seen, edge.id
@@ -679,7 +680,7 @@ proc `$`*[N, E](thing: Node[N, E] | Edge[N, E]): string =
   when compiles($thing.value):
     result = $thing.value
   else:
-    result = "thing needs a dollar"
+    result = "$" & $typeof(thing)
 
 proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite node.
@@ -751,71 +752,29 @@ when false:
           result = true
           break
 
-when isMainModule:
-  import std/os
+proc nodeSet[N, E, F](graph: Graph[N, E, F]): HashSet[N] =
+  result = initHashSet[N](initializeSize = len(graph))
+  for node in nodes(graph):
+    result.incl node.value
 
-  import criterion
+proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool =
+  ## Returns `true` if there are no nodes in the graph with
+  ## duplicate values.
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    discard g.add 9
+    assert g.nodesAreUnique
+    discard g.add 3
+    assert not g.nodesAreUnique
 
-  const
-    dgf = toInt(defaultGraphFlags)
-  echo "graph object size ", sizeof(GraphObj[int, string, dgf])
-  echo "node object size ", sizeof(NodeObj[int, string])
-  echo "edge object size ", sizeof(EdgeObj[int, string])
-
-  when not defined(danger):
-    echo "build with -d:danger to run benchmarks"
-  else:
-    echo "this'll take something on the order of 30s..."
-    var cfg = newDefaultConfig()
-    cfg.brief = true
-    cfg.budget = 1.0
-
-    benchmark cfg:
-      type
-        AnN {.size: sizeof(int32).} = enum NodeA, NodeB, NodeC, NodeD
-        AnE {.size: sizeof(int32).} = enum Edge1, Edge2, Edge3
-
-      var
-        g = newGraph[int, int]()
-        s = newGraph[int, int]({UniqueNodes, UniqueEdges, UltraLight})
-        q = newGraph[AnN, AnE]({UniqueNodes, UniqueEdges, UltraLight})
-        p = newGraph[set[AnN], AnE]({UniqueNodes, UniqueEdges, UltraLight})
-        r = newGraph[int32, AnE]({UniqueNodes, UniqueEdges, UltraLight})
-      var
-        g3 = g.add 3
-        s3 = s.add 3
-        q3 = q.add NodeD
-        p3 = p.add {NodeA, NodeB}
-        p4 = p.add {NodeB, NodeC}
-        p5 = p.add {NodeD}
-        r3 = r.add 3
-
-      assert p3.value == {NodeA, NodeB}
-      assert p4.value == {NodeB, NodeC}
-      assert p5.value == {NodeD}
-      var
-        pe = p.edge(p3, Edge1, p4)
-      assert p3 in pe
-      assert p4 in pe
-
-      proc int_birth() {.measure.} =
-        embirth(s, s3)
-
-      proc enum_birth() {.measure.} =
-        embirth(q, q3)
-
-      proc set_birth() {.measure.} =
-        embirth(p, p3)
-
-      proc int32_birth() {.measure.} =
-        embirth(r, r3)
-
-      when "" != getEnv "TRAVIS_BUILD_DIR":
-        proc slow_birth() {.measure.} =
-          embirth(g, g3)
-
-        proc slow_add() {.measure.} =
-          add(g, 1)
-
-        proc fast_add() {.measure.} =
-          add(s, 1)
+  var
+    seen = initHashSet[N](initialSize = len(graph).rightSize)
+  block found:
+    for value in items(graph):
+      if value in seen:
+        result = false
+        break found
+      else:
+        seen.incl value
+    result = true

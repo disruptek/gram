@@ -181,6 +181,8 @@ function main() {
     title="hash[N, E](edge: Edge[N, E]): Hash"><wbr />hash<span class="attachedType">Edge</span></a></li>
   <li><a class="reference" href="#hash%2CGraph%5BN%2CE%2CF%5D"
     title="hash[N, E, F](graph: Graph[N, E, F]): Hash"><wbr />hash<span class="attachedType">Graph</span></a></li>
+  <li><a class="reference" href="#nodesAreUnique%2CGraph%5BN%2CE%2CF%5D"
+    title="nodesAreUnique[N, E, F](graph: Graph[N, E, F]): bool"><wbr />nodes<wbr />Are<wbr />Unique<span class="attachedType">Graph</span></a></li>
 
   </ul>
 </li>
@@ -200,7 +202,7 @@ function main() {
   <li><a class="reference" href="#nodes.i%2CGraph%5BN%2CE%2CF%5D"
     title="nodes[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E]"><wbr />nodes<span class="attachedType">Graph</span></a></li>
   <li><a class="reference" href="#items.i%2CGraph%5BN%2CE%2CF%5D"
-    title="items[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E]"><wbr />items<span class="attachedType">Graph</span></a></li>
+    title="items[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): N"><wbr />items<span class="attachedType">Graph</span></a></li>
   <li><a class="reference" href="#edges.i%2CGraph%5BN%2CE%2CF%5D"
     title="edges[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): EdgeResult[N, E]"><wbr />edges<span class="attachedType">Graph</span></a></li>
 
@@ -573,6 +575,20 @@ Produce a <tt class="docutils literal"><span class="pre">Hash</span></tt> that u
 Produce a <tt class="docutils literal"><span class="pre">Hash</span></tt> that uniquely identifies the <tt class="docutils literal"><span class="pre">graph</span></tt> based upon its contents.
 
 </dd>
+<a id="nodesAreUnique,Graph[N,E,F]"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#nodesAreUnique%2CGraph%5BN%2CE%2CF%5D"><span class="Identifier">nodesAreUnique</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">,</span> <span class="Identifier">F</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">graph</span><span class="Other">:</span> <a href="gram.html#Graph"><span class="Identifier">Graph</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">,</span> <span class="Identifier">F</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span></pre></dt>
+<dd>
+
+Returns <tt class="docutils literal"><span class="pre">true</span></tt> if there are no nodes in the graph with duplicate values.
+<p><strong class="examples_text">Example:</strong></p>
+<pre class="listing"><span class="Keyword">var</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Whitespace"> </span><span class="Operator">=</span><span class="Whitespace"> </span><span class="Identifier">newGraph</span><span class="Punctuation">[</span><span class="Identifier">int</span><span class="Punctuation">,</span><span class="Whitespace"> </span><span class="Identifier">string</span><span class="Punctuation">]</span><span class="Punctuation">(</span><span class="Punctuation">)</span><span class="Whitespace">
+</span><span class="Keyword">discard</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">add</span><span class="Whitespace"> </span><span class="DecNumber">3</span><span class="Whitespace">
+</span><span class="Keyword">discard</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">add</span><span class="Whitespace"> </span><span class="DecNumber">9</span><span class="Whitespace">
+</span><span class="Identifier">assert</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">nodesAreUnique</span><span class="Whitespace">
+</span><span class="Keyword">discard</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">add</span><span class="Whitespace"> </span><span class="DecNumber">3</span><span class="Whitespace">
+</span><span class="Identifier">assert</span><span class="Whitespace"> </span><span class="Keyword">not</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">nodesAreUnique</span></pre>
+
+</dd>
 
 </dl></div>
 <div class="section" id="15">
@@ -628,15 +644,15 @@ Yield each node in the <tt class="docutils literal"><span class="pre">graph</spa
 
 </dd>
 <a id="items.i,Graph[N,E,F]"></a>
-<dt><pre><span class="Keyword">iterator</span> <a href="#items.i%2CGraph%5BN%2CE%2CF%5D"><span class="Identifier">items</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">;</span> <span class="Identifier">F</span><span class="Other">:</span> <span class="Identifier">static</span><span class="Other">[</span><a href="gram.html#GraphFlags"><span class="Identifier">GraphFlags</span></a><span class="Other">]</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">graph</span><span class="Other">:</span> <a href="gram.html#Graph"><span class="Identifier">Graph</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">,</span> <span class="Identifier">F</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="gram.html#Node"><span class="Identifier">Node</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">]</span></pre></dt>
+<dt><pre><span class="Keyword">iterator</span> <a href="#items.i%2CGraph%5BN%2CE%2CF%5D"><span class="Identifier">items</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">;</span> <span class="Identifier">F</span><span class="Other">:</span> <span class="Identifier">static</span><span class="Other">[</span><a href="gram.html#GraphFlags"><span class="Identifier">GraphFlags</span></a><span class="Other">]</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">graph</span><span class="Other">:</span> <a href="gram.html#Graph"><span class="Identifier">Graph</span></a><span class="Other">[</span><span class="Identifier">N</span><span class="Other">,</span> <span class="Identifier">E</span><span class="Other">,</span> <span class="Identifier">F</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">N</span></pre></dt>
 <dd>
 
-Alias for <tt class="docutils literal"><span class="pre">nodes(graph)</span></tt> iterator.
+Yield the values of nodes in the <tt class="docutils literal"><span class="pre">graph</span></tt>.
 <p><strong class="examples_text">Example:</strong></p>
 <pre class="listing"><span class="Keyword">var</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Whitespace"> </span><span class="Operator">=</span><span class="Whitespace"> </span><span class="Identifier">newGraph</span><span class="Punctuation">[</span><span class="Identifier">int</span><span class="Punctuation">,</span><span class="Whitespace"> </span><span class="Identifier">string</span><span class="Punctuation">]</span><span class="Punctuation">(</span><span class="Punctuation">)</span><span class="Whitespace">
 </span><span class="Keyword">discard</span><span class="Whitespace"> </span><span class="Identifier">g</span><span class="Operator">.</span><span class="Identifier">add</span><span class="Whitespace"> </span><span class="DecNumber">3</span><span class="Whitespace">
-</span><span class="Keyword">for</span><span class="Whitespace"> </span><span class="Identifier">node</span><span class="Whitespace"> </span><span class="Keyword">in</span><span class="Whitespace"> </span><span class="Identifier">items</span><span class="Punctuation">(</span><span class="Identifier">g</span><span class="Punctuation">)</span><span class="Punctuation">:</span><span class="Whitespace">
-  </span><span class="Identifier">assert</span><span class="Whitespace"> </span><span class="Identifier">node</span><span class="Operator">.</span><span class="Identifier">value</span><span class="Whitespace"> </span><span class="Operator">==</span><span class="Whitespace"> </span><span class="DecNumber">3</span></pre>
+</span><span class="Keyword">for</span><span class="Whitespace"> </span><span class="Identifier">value</span><span class="Whitespace"> </span><span class="Keyword">in</span><span class="Whitespace"> </span><span class="Identifier">items</span><span class="Punctuation">(</span><span class="Identifier">g</span><span class="Punctuation">)</span><span class="Punctuation">:</span><span class="Whitespace">
+  </span><span class="Identifier">assert</span><span class="Whitespace"> </span><span class="Identifier">value</span><span class="Whitespace"> </span><span class="Operator">==</span><span class="Whitespace"> </span><span class="DecNumber">3</span></pre>
 
 </dd>
 <a id="edges.i,Graph[N,E,F]"></a>
@@ -687,7 +703,7 @@ Create a new graph; nodes will hold <tt class="docutils literal"><span class="pr
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2020-05-31 04:15:10 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2020-06-07 17:56:13 UTC</small>
       </div>
     </div>
   </div>
