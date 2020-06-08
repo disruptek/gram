@@ -76,7 +76,7 @@ type
     edge: Edge[N, E]
     target: Node[N, E]
 
-converter toInt(flags: set[GraphFlag]): GraphFlags =
+converter toInt*(flags: set[GraphFlag]): GraphFlags =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(flags):
@@ -84,7 +84,7 @@ converter toInt(flags: set[GraphFlag]): GraphFlags =
   else:
     result = cast[int](flags)
 
-converter toFlags(value: GraphFlags): set[GraphFlag] =
+converter toFlags*(value: GraphFlags): set[GraphFlag] =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(GraphFlag):
@@ -100,10 +100,10 @@ const
   defaultGraphFlags* = {Directed, SelfLoops, ValueIndex}
 
 type
-  ValueIndexGraph = concept g
+  ValueIndexGraph* = concept g
     contains(g.flags, ValueIndex) == true
 
-  NoValueIndexGraph = concept g
+  NoValueIndexGraph* = concept g
     contains(g.flags, ValueIndex) == false
 
 when false:
@@ -200,9 +200,11 @@ proc init*(graph: var ValueIndexGraph) =
   graph.members = initIntSet()
   graph.hashes.init
 
-proc init(graph: var NoValueIndexGraph) =
+proc init*(graph: var NoValueIndexGraph) =
   assert graph != nil
   graph.members = initIntSet()
+  static:
+    error "wee"
 
 template newGraph*[N, E](wanted: typed): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
@@ -808,7 +810,7 @@ proc hash*[N, E, F](graph: Graph[N, E, F]): Hash =
   result = !$h
 
 when false:
-  proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool =
+  proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
     runnableExamples:
       var g = newGraph[int, string]()
       discard g.add 3
@@ -827,7 +829,7 @@ proc nodeSet[N, E, F](graph: Graph[N, E, F]): HashSet[N] =
   for node in nodes(graph):
     result.incl node.value
 
-proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool =
+proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool {.example.} =
   ## Returns `true` if there are no nodes in the graph with
   ## duplicate values.
   ## O(1) for `ValueIndex` graphs, else O(n).

@@ -4,7 +4,7 @@ import std/os
 
 import criterion
 
-include gram
+import gram
 
 const
   defGraph = defaultGraphFlags
