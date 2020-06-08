@@ -32,7 +32,7 @@ type
     Outgoing
 
   GraphObj[N, E; F: static[int]] = object
-    nodes: Nodes[N, E]
+    nodes: Container[Node[N, E]]
     members: IntSet
     hashes: HashSet[N]
 
@@ -50,12 +50,14 @@ type
   NodeObj[N, E] = object
     value*: N
     id: int
-    incoming: Edges[N, E]
-    outgoing: Edges[N, E]
+    incoming: Container[Edge[N, E]]
+    outgoing: Container[Edge[N, E]]
     edges: IntSet
     peers: IntSet
     initialized: bool
-  Nodes[N, E] = distinct DoublyLinkedList[Node[N, E]]
+
+  Container[Element] = distinct DoublyLinkedList[Element]
+  Element[N, E] = Node[N, E] or Edge[N, E]
 
   Edge*[N, E] = ref EdgeObj[N, E]                            ##
   ## An edge connects two nodes.
@@ -67,7 +69,6 @@ type
     id: int
     source: Node[N, E]
     target: Node[N, E]
-  Edges[N, E] = distinct DoublyLinkedList[Edge[N, E]]
 
   GraphFlags* = int
 
@@ -93,7 +94,7 @@ converter toFlags*(value: GraphFlags): set[GraphFlag] =
   else:
     result = cast[set[GraphFlag]](value)
 
-template flags*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): set[GraphFlag] =
+template flags*[N, E, F](graph: Graph[N, E, F]): set[GraphFlag] =
   F.toFlags
 
 const
@@ -135,65 +136,35 @@ template graph[N, E, F](g: Graph[N, E, F]): Graph[N, E, F] = g
 template node[N, E](n: Node[N, E]): Node[N, E] = n
 template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
 
-proc newNodes[N, E](): Nodes[N, E] =
-  ## Create a new container for nodes.
-  result = Nodes[N, E] initDoublyLinkedList[Node[N, E]]()
+proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
+  ## Create a new container for nodes or edges.
+  result = Container[form] initDoublyLinkedList[form]()
 
-proc newEdges[N, E](): Edges[N, E] =
-  ## Create a new container for edges.
-  result = Edges[N, E] initDoublyLinkedList[Edge[N, E]]()
-
-iterator nodes[N, E](list: var Edges[N, E]): DoublyLinkedNode[Edge[N, E]] =
-  for item in nodes(DoublyLinkedList[Edge[N, E]] list):
+iterator nodes[T](list: var Container[T]): DoublyLinkedNode[T] =
+  for item in nodes(DoublyLinkedList[T] list):
     yield item
 
-iterator nodes[N, E](list: var Nodes[N, E]): DoublyLinkedNode[Node[N, E]] =
-  for item in nodes(DoublyLinkedList[Node[N, E]] list):
+iterator mitems[T](list: var Container[T]): var T =
+  for item in mitems(DoublyLinkedList[T] list):
     yield item
 
-iterator mitems[N, E](list: var Edges[N, E]): var Edge[N, E] =
-  for item in mitems(DoublyLinkedList[Edge[N, E]] list):
+iterator items[T](list: Container[T]): T =
+  for item in items(DoublyLinkedList[T] list):
     yield item
 
-iterator mitems[N, E](list: var Nodes[N, E]): var Node[N, E] =
-  for item in mitems(DoublyLinkedList[Node[N, E]] list):
-    yield item
+proc append[T](list: var Container[T]; value: T) =
+  append(DoublyLinkedList[T] list, newDoublyLinkedNode(value))
 
-iterator items[N, E](list: Edges[N, E]): Edge[N, E] =
-  for item in items(DoublyLinkedList[Edge[N, E]] list):
-    yield item
-
-iterator items[N, E](list: Nodes[N, E]): Node[N, E] =
-  for item in items(DoublyLinkedList[Node[N, E]] list):
-    yield item
-
-proc append[N, E](list: var Nodes[N, E]; value: Node[N, E]) =
-  append(DoublyLinkedList[Node[N, E]] list, newDoublyLinkedNode(value))
-
-proc append[N, E](list: var Edges[N, E]; value: Edge[N, E]) =
-  append(DoublyLinkedList[Edge[N, E]] list, newDoublyLinkedNode(value))
-
-proc remove[N, E](list: var Edges[N, E]; node: Edge[N, E]) =
-  ## Remove an edge from container.
+proc remove[T](list: var Container[T]; node: T) =
+  ## Remove an element from container.
   for item in nodes(list):
     if item.value.id == node.id:
-      remove(DoublyLinkedList[Edge[N, E]] list, item)
+      remove(DoublyLinkedList[T] list, item)
 
-proc remove[N, E](list: var Nodes[N, E]; node: Node[N, E]) =
-  ## Remove a node from container.
+proc clear[T](list: var Container[T]) =
+  ## Remove all elements from container.
   for item in nodes(list):
-    if item.value.id == node.id:
-      remove(DoublyLinkedList[Node[N, E]] list, item)
-
-proc clear[N, E](list: var Edges[N, E]) =
-  ## Remove all edges from container.
-  for item in nodes(list):
-    remove(DoublyLinkedList[Edge[N, E]] list, item)
-
-proc clear[N, E](list: var Nodes[N, E]) =
-  ## Remove all nodes from container.
-  for item in nodes(list):
-    remove(DoublyLinkedList[Node[N, E]] list, item)
+    remove(DoublyLinkedList[T] list, item)
 
 proc init*(graph: var ValueIndexGraph) =
   assert graph != nil
@@ -206,7 +177,7 @@ proc init*(graph: var NoValueIndexGraph) =
   static:
     error "wee"
 
-template newGraph*[N, E](wanted: typed): auto =
+template newGraph*[N, E](wanted: GraphFlags): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -214,8 +185,8 @@ template newGraph*[N, E](wanted: typed): auto =
 
   block:
     var
-      result = Graph[N, E, toInt(wanted)]()
-    result.nodes = newNodes[N, E]()
+      result = Graph[N, E, wanted]()
+    result.nodes = result.newContainer(Node[N, E])
     init result
     result
 
@@ -237,12 +208,13 @@ proc `=destroy`[N, E](edge: var EdgeObj[N, E]) =
   # just, really fuck this thing up
   edge.id = 0
 
-proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) {.inline.} =
+proc init[N, E, F](graph: Graph[N, E, F]; node: var Node[N, E]) =
   ## Initialize a `node` for use in the `graph`.
   assert node != nil
   if not node.initialized:
-    node.incoming = newEdges[N, E]()
-    node.outgoing = newEdges[N, E]()
+    when Directed in graph.flags:
+      node.incoming = graph.newContainer(Edge[N, E])
+    node.outgoing = graph.newContainer(Edge[N, E])
     node.edges = initIntSet()
     node.peers = initIntSet()
     node.initialized = true
@@ -501,9 +473,10 @@ proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
       append(node.outgoing, edge)
       # and we'll ensure it's in our peers
       incl node.peers, edge.target.id
-    # if this is the target node,
+    # if we are the target node,
     if edge.target.id == node.id:
       # it's an incoming edge,
+      # FIXME: need to handle Undirected graphs properly
       append(node.incoming, edge)
       # and we'll ensure it's in our peers
       incl node.peers, edge.source.id
@@ -683,12 +656,14 @@ proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   if node.initialized:
     if edge.id in node.edges:
       # remove the source side
+      # FIXME: need to handle Undirected graphs properly
       remove(edge.source.incoming, edge)
       remove(edge.source.outgoing, edge)
       excl(edge.source.edges, edge.id)
       excl(edge.source.peers, edge.target.id)
       # we can skip removing the target side if this is a "loop"
       if edge.target.id != edge.source.id:
+        # FIXME: need to handle Undirected graphs properly
         remove(edge.target.incoming, edge)
         remove(edge.target.outgoing, edge)
         excl(edge.target.edges, edge.id)
@@ -715,13 +690,13 @@ proc del*[N, E](node: var Node[N, E]; value: E) {.example.} =
     if edge.value.value == value:
       node.del edge.value
 
-proc count[N, E](nodes: Nodes[N, E] | Edges[N, E]): int =
+proc count[T](list: Container[T]): int =
   ## Count the number of items in a container.
-  for node in nodes.items:
+  for node in items(nodes):
     inc result
 
 # exported for serialization purposes
-proc len*[N, E](nodes: Nodes[N, E] | Edges[N, E]): int
+proc len*[T](list: Container[T]): int
   {.deprecated: "count() conveys the O(n) cost".} =
   ## Use count() instead; it expresses the O more clearly.
   result = count(nodes)
@@ -767,11 +742,11 @@ proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.example.} =
     assert l9.value == 9
 
   block found:
-    for edge in node.incoming.items:
+    for edge in items(node.incoming):
       if edge.value == key:
         result = edge.target
         break found
-    for edge in node.outgoing.items:
+    for edge in items(node.outgoing):
       if edge.value == key:
         result = edge.target
         break found

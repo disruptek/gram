@@ -10,9 +10,10 @@ flags	gram.html#flags.t,Graph[N,E,F]	gram: flags[N; E; F](graph: Graph[N, E, F])
 defaultGraphFlags	gram.html#defaultGraphFlags	gram: defaultGraphFlags	
 ValueIndexGraph	gram.html#ValueIndexGraph	gram: ValueIndexGraph	
 NoValueIndexGraph	gram.html#NoValueIndexGraph	gram: NoValueIndexGraph	
+newContainer	gram.html#newContainer,Graph[N,E,F],typedesc	gram: newContainer[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto	
 init	gram.html#init,ValueIndexGraph	gram: init(graph: var ValueIndexGraph)	
 init	gram.html#init,NoValueIndexGraph	gram: init(graph: var NoValueIndexGraph)	
-newGraph	gram.html#newGraph.t,typed	gram: newGraph[N; E](wanted: typed): auto	
+newGraph	gram.html#newGraph.t,GraphFlags	gram: newGraph[N; E](wanted: GraphFlags): auto	
 newGraph	gram.html#newGraph.t	gram: newGraph[N; E](): auto	
 len	gram.html#len,Graph[N,E,F]	gram: len[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int	
 incl	gram.html#incl,Graph[N,E,F],Node[N,E]	gram: incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; node: Node[N, E])	
@@ -39,7 +40,7 @@ contains	gram.html#contains,Edge[N,E],N	gram: contains[N, E](edge: Edge[N, E]; v
 contains	gram.html#contains,Edge[N,E],Node[N,E]	gram: contains[N, E](edge: Edge[N, E]; node: Node[N, E]): bool	
 del	gram.html#del,Node[N,E],Edge[N,E]	gram: del[N, E](node: var Node[N, E]; edge: Edge[N, E])	
 del	gram.html#del,Node[N,E],E	gram: del[N, E](node: var Node[N, E]; value: E)	
-len	gram.html#len	gram: len[N, E](nodes: Nodes[N, E] | Edges[N, E]): int	
+len	gram.html#len,Container[T]	gram: len[T](list: Container[T]): int	
 contains	gram.html#contains,Node[N,E],E	gram: contains[N, E](node: Node[N, E]; key: E): bool	
 `$`	gram.html#$	gram: `$`[N, E](thing: Node[N, E] | Edge[N, E]): string	
 `[]`	gram.html#[],Node[N,E],E_2	gram: `[]`[N, E](node: Node[N, E]; key: E): Node[N, E]	
