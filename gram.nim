@@ -18,13 +18,14 @@ import std/sets
 
 type
   GraphFlag* {.size: sizeof(int).} = enum
-    QueryResult = "the graph only makes sense in relation to another graph"
-    UniqueNodes = "the nodes in the graph all have unique values"
-    UniqueEdges = "the edges in the graph all have unique values"
-    Directed    = "edges have different semantics for source and target"
-    Undirected  = "edges have identical semantics for source and target"
-    SelfLoops   = "nodes may have edges that target themselves"
-    Ultralight  = "the graph is even lighter"
+    QueryResult  = "the graph only makes sense in relation to another graph"
+    UniqueNodes  = "the nodes in the graph all have unique values"
+    UniqueEdges  = "the edges in the graph all have unique values"
+    Directed     = "edges have different semantics for source and target"
+    Undirected   = "edges have identical semantics for source and target"
+    SelfLoops    = "nodes may have edges that target themselves"
+    Ultralight   = "the graph is even lighter"
+    ValueIndex   = "node and edge values are indexed for speed"
 
   EdgeFlag {.size: sizeof(int).} = enum
     Incoming
@@ -33,6 +34,7 @@ type
   GraphObj[N, E; F: static[int]] = object
     nodes: Nodes[N, E]
     members: IntSet
+    hashes: HashSet[N]
 
   Graph*[N, E; F: static[int]] = ref GraphObj[N, E, F] ##
   ## A collection of nodes and edges.
@@ -74,7 +76,7 @@ type
     edge: Edge[N, E]
     target: Node[N, E]
 
-converter toInt(flags: static[set[GraphFlag]]): GraphFlags =
+converter toInt(flags: set[GraphFlag]): GraphFlags =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(flags):
@@ -82,7 +84,7 @@ converter toInt(flags: static[set[GraphFlag]]): GraphFlags =
   else:
     result = cast[int](flags)
 
-converter toFlags(value: int): set[GraphFlag] =
+converter toFlags(value: GraphFlags): set[GraphFlag] =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(GraphFlag):
@@ -91,8 +93,26 @@ converter toFlags(value: int): set[GraphFlag] =
   else:
     result = cast[set[GraphFlag]](value)
 
+template flags*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): set[GraphFlag] =
+  F.toFlags
+
 const
-  defaultGraphFlags* = {Directed, SelfLoops}
+  defaultGraphFlags* = {Directed, SelfLoops, ValueIndex}
+
+type
+  ValueIndexGraph = concept g
+    contains(g.flags, ValueIndex) == true
+
+  NoValueIndexGraph = concept g
+    contains(g.flags, ValueIndex) == false
+
+when false:
+  type
+    LightNodesGraph = concept g
+      {UniqueNodes, UltraLight} <= g.flags == true
+
+    HeavyNodesGraph = concept g
+      {UniqueNodes, UltraLight} <= g.flags == false
 
 # just a hack to output the example numbers during docgen...
 when defined(nimdoc):
@@ -175,7 +195,16 @@ proc clear[N, E](list: var Nodes[N, E]) =
   for item in nodes(list):
     remove(DoublyLinkedList[Node[N, E]] list, item)
 
-template newGraph*[N, E](flags: typed): auto =
+proc init*(graph: var ValueIndexGraph) =
+  assert graph != nil
+  graph.members = initIntSet()
+  graph.hashes.init
+
+proc init(graph: var NoValueIndexGraph) =
+  assert graph != nil
+  graph.members = initIntSet()
+
+template newGraph*[N, E](wanted: typed): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -183,9 +212,9 @@ template newGraph*[N, E](flags: typed): auto =
 
   block:
     var
-      result = Graph[N, E, toInt(flags)]()
+      result = Graph[N, E, toInt(wanted)]()
     result.nodes = newNodes[N, E]()
-    result.members = initIntSet()
+    init result
     result
 
 template newGraph*[N, E](): auto = newGraph[N, E](defaultGraphFlags)
@@ -302,6 +331,8 @@ proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   if node.id notin graph.members:
     append(graph.nodes, node)
     incl graph.members, node.id
+    # cache the value hash
+    incl graph.hashes, node.value
 
 proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                        value: N): Node[N, E] {.example.} =
@@ -318,18 +349,32 @@ proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   graph.incl result
 
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
+                                            node: Node[N, E]): bool {.example.} =
+  ## Returns `true` if `graph` contains `node`.
+  ## O(1).
+  runnableExamples:
+    var g = newGraph[int, string]()
+    let n = g.add 3
+    assert n in g
+
+  result = node.id in graph.members
+
+proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
                                             value: N): bool {.example.} =
   ## Returns `true` if `graph` contains a node with the given `value`.
-  ## Not yet O(1).
+  ## O(1) for `ValueIndex` graphs, else O(n).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
     assert 3 in g
 
-  for item in items(graph):
-    if value == item:
-      result = true
-      break
+  when ValueIndex in graph.flags:
+    result = value in graph.hashes
+  else:
+    for item in items(graph):
+      if value == item:
+        result = true
+        break
 
 proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         key: N): var Node[N, E]
@@ -341,10 +386,19 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     assert g[3].value == 3
 
   block found:
-    for node in mitems(graph.nodes):
-      if node.value == key:
-        result = node
-        break found
+    block search:
+      # optimization using ValueIndex
+      when ValueIndex in graph.flags:
+        # if it's not in the index, don't retrieve it
+        if key notin graph:
+          break search
+
+      # find it and return it
+      for node in mitems(graph.nodes):
+        if node.value == key:
+          result = node
+          break found
+
     raise newException(KeyError, "node not found: " & $key)
 
 proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
@@ -425,6 +479,9 @@ proc del*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   if node.id in graph.members:
     remove(graph.nodes, node)
     excl graph.members, node.id
+    when ValueIndex in graph.flags:
+      # uncache the value hash
+      excl graph.hashes, node.value
 
 proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Link `node` to `target` via `edge`; O(1).
@@ -494,6 +551,19 @@ proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   # include the edge in the node and target
   node.incl result
   target.incl result
+
+proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
+                                            edge: Edge[N, E]): bool {.example.} =
+  ## Returns `true` if `graph` contains `edge`.
+  ## O(1).
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    discard g.add 27
+    let e = g.edge(g[3], "cubed", g[27])
+    assert e in g
+
+  result = edge.source in graph or edge.target in graph
 
 proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
   ## Index a `node` by edge `key`, returning the opposite (mutable) node.
@@ -650,13 +720,13 @@ proc count[N, E](nodes: Nodes[N, E] | Edges[N, E]): int =
 
 # exported for serialization purposes
 proc len*[N, E](nodes: Nodes[N, E] | Edges[N, E]): int
-  {.deprecated: "count() conveys the O(N) cost".} =
+  {.deprecated: "count() conveys the O(n) cost".} =
   ## Use count() instead; it expresses the O more clearly.
   result = count(nodes)
 
 proc contains*[N, E](node: Node[N, E]; key: E): bool {.example.} =
   ## Returns `true` if an edge with value `key` links `node`.
-  ## Not yet O(1).
+  ## O(n).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
@@ -760,6 +830,7 @@ proc nodeSet[N, E, F](graph: Graph[N, E, F]): HashSet[N] =
 proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool =
   ## Returns `true` if there are no nodes in the graph with
   ## duplicate values.
+  ## O(1) for `ValueIndex` graphs, else O(n).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
@@ -768,13 +839,16 @@ proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool =
     discard g.add 3
     assert not g.nodesAreUnique
 
-  var
-    seen = initHashSet[N](initialSize = len(graph).rightSize)
-  block found:
-    for value in items(graph):
-      if value in seen:
-        result = false
-        break found
-      else:
-        seen.incl value
-    result = true
+  when ValueIndex in graph.flags:
+    result = len(graph.members) == len(graph.hashes)
+  else:
+    var
+      seen = initHashSet[N](initialSize = len(graph).rightSize)
+    block found:
+      for value in items(graph):
+        if value in seen:
+          result = false
+          break found
+        else:
+          seen.incl value
+      result = true
