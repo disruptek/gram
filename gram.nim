@@ -174,8 +174,6 @@ proc init*(graph: var ValueIndexGraph) =
 proc init*(graph: var NoValueIndexGraph) =
   assert graph != nil
   graph.members = initIntSet()
-  static:
-    error "wee"
 
 template newGraph*[N, E](wanted: GraphFlags): auto =
   ## Create a new graph; nodes will hold `N` while edges will hold `E`.
