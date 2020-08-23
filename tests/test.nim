@@ -41,7 +41,7 @@ testes:
   checkMembership(g, g3)
 
   ## empty the graph.
-  g.clear
+  clear g
 
   ## now add some new immutable nodes.
   let
