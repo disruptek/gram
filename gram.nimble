@@ -2,9 +2,9 @@ version = "0.0.9"
 author = "disruptek"
 description = "lightweight generic graphs"
 license = "MIT"
-requires "nim >= 1.0.0"
+requires "nim >= 1.0.8"
 
-requires "https://github.com/disruptek/testes < 1.0.0"
+requires "https://github.com/disruptek/testes >= 0.2.2 & < 1.0.0"
 
 proc execTest(test: string) =
   exec "nim c           -f -r " & test
