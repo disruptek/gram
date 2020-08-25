@@ -11,10 +11,12 @@ proc execTest(test: string) =
   exec "nim c   -d:danger  -r " & test
   exec "nim cpp            -r " & test
   exec "nim cpp -d:danger  -r " & test
-  when (NimMajor, NimMinor) >= (1, 2):
+  when (NimMajor, NimMinor) >= (1, 3):
     exec "nim c --useVersion:1.0 -d:danger -r " & test
+    exec "nim c   --gc:arc -r " & test
     exec "nim c   --gc:arc -d:danger -r " & test
     exec "nim cpp --useVersion:1.0 -d:danger -r " & test
+    exec "nim cpp --gc:arc -r " & test
     exec "nim cpp --gc:arc -d:danger -r " & test
 
 task test, "run tests for travis":

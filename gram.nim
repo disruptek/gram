@@ -16,6 +16,10 @@ import std/sets
 ## - Perfect is the enemy of Good.
 ##
 
+when defined(gcArc):
+  when (NimMajor, NimMinor) < (1, 3):
+    {.error: "--gc:arc requires nim-1.3+ due to bugs in 1.2".}
+
 type
   GraphFlag* {.size: sizeof(int).} = enum
     QueryResult  = "the graph only makes sense in relation to another graph"
