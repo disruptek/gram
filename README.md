@@ -1,8 +1,11 @@
 # gram
-Lightweight generic graphs
 
-- `cpp +/ nim-1.0` [![Build Status](https://travis-ci.org/disruptek/gram.svg?branch=master)](https://travis-ci.org/disruptek/gram)
-- `arc +/ cpp +/ nim-1.3` [![Build Status](https://travis-ci.org/disruptek/gram.svg?branch=devel)](https://travis-ci.org/disruptek/gram)
+[![CI](https://github.com/disruptek/gram/workflows/CI/badge.svg)](https://github.com/disruptek/gram/actions?query=workflow%3ACI)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/disruptek/gram?style=flat)](https://github.com/disruptek/gram/releases/latest)
+![Minimum supported Nim version](https://img.shields.io/badge/nim-1.0.8%2B-informational?style=flat&logo=nim)
+[![License](https://img.shields.io/github/license/disruptek/gram?style=flat)](#license)
+
+Lightweight generic graphs
 
 ## Goals
 - generic node and edge types
