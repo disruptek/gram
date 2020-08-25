@@ -2,7 +2,7 @@ version = "0.0.9"
 author = "disruptek"
 description = "lightweight generic graphs"
 license = "MIT"
-requires "nim >= 1.0.8"
+requires "nim >= 1.2.6"
 
 requires "https://github.com/disruptek/testes >= 0.2.2 & < 1.0.0"
 
