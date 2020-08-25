@@ -19,7 +19,7 @@ testes:
     g = newGraph[int, string]()
 
   ## tell me about it
-  check len($g.flags) > 0
+  check card(g.flags) > 0
 
   ## add an item to the graph
   var
