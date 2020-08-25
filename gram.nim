@@ -817,8 +817,12 @@ proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool {.example.} =
   when ValueIndex in graph.flags:
     result = len(graph.members) == len(graph.hashes)
   else:
-    var
-      seen = initHashSet[N](initialSize = len(graph).rightSize)
+    when (NimMajor, NimMinor) >= (1, 3):
+      var
+        seen = initHashSet[N](initialSize = len(graph))
+    else:
+      var
+        seen = initHashSet[N](initialSize = len(graph).rightSize)
     block found:
       for value in items(graph):
         if value in seen:
