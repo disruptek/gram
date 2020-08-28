@@ -7,6 +7,10 @@ requires "nim >= 1.2.6"
 requires "https://github.com/disruptek/testes >= 0.2.2 & < 1.0.0"
 requires "https://github.com/disruptek/skiplists < 1.0.0"
 
+proc execCmd(cmd: string) =
+  echo "execCmd:" & cmd
+  exec cmd
+
 proc execTest(test: string) =
   when getEnv("GITHUB_ACTIONS", "false") != "true":
     execCmd "nim c        -f -r " & test
