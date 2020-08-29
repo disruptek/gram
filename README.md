@@ -5,7 +5,7 @@
 ![Minimum supported Nim version](https://img.shields.io/badge/nim-1.2.6%2B-informational?style=flat&logo=nim)
 [![License](https://img.shields.io/github/license/disruptek/gram?style=flat)](#license)
 
-Lightweight generic graphs
+Simple generic graphs
 
 ## Goals
 - generic node and edge types

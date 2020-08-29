@@ -1,6 +1,6 @@
 version = "0.0.9"
 author = "disruptek"
-description = "lightweight generic graphs"
+description = "simple generic graphs"
 license = "MIT"
 requires "nim >= 1.2.6"
 
