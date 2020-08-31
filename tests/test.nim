@@ -42,6 +42,7 @@ testes:
 
   ## empty the graph.
   clear g
+  check len(g) == 0
 
   ## now add some new immutable nodes.
   let

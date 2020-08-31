@@ -172,6 +172,17 @@ proc clear[T](list: var Container[T]) =
   for item in nodes(list):
     remove(DoublyLinkedList[T] list, item)
 
+proc count[T](list: Container[T]): int =
+  ## Count the number of items in a container.
+  for node in items(list):
+    inc result
+
+# exported for serialization purposes
+proc len*[T](list: Container[T]): int
+  {.deprecated: "count() conveys the O(n) cost".} =
+  ## Use count() instead; it expresses the O more clearly.
+  result = count(list)
+
 proc init*(graph: var ValueIndexGraph) =
   assert graph != nil
   graph.members = initIntSet()
@@ -284,6 +295,7 @@ proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.ex.} =
     assert len(g) == 0
 
   result = len(graph.members)
+  assert count(graph.nodes) == result
 
 proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                        edge: Edge[N, E]) {.ex.} =
@@ -382,8 +394,7 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
 proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
   ## Empty a `graph` of all nodes and edges.
   clear(graph.members)
-  for item in nodes(graph.nodes):
-    remove(DoublyLinkedList[Node[N, E]] graph.nodes, item)
+  clear(graph.nodes)
 
 proc clear*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F])
   {.ex.} =
@@ -693,17 +704,6 @@ proc del*[N, E](node: var Node[N, E]; value: E) {.ex.} =
   for edge in nodes(node.incoming):
     if edge.value.value == value:
       node.del edge.value
-
-proc count[T](list: Container[T]): int =
-  ## Count the number of items in a container.
-  for node in items(nodes):
-    inc result
-
-# exported for serialization purposes
-proc len*[T](list: Container[T]): int
-  {.deprecated: "count() conveys the O(n) cost".} =
-  ## Use count() instead; it expresses the O more clearly.
-  result = count(nodes)
 
 proc contains*[N, E](node: Node[N, E]; key: E): bool {.ex.} =
   ## Returns `true` if an edge with value `key` links `node`.
