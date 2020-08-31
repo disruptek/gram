@@ -20,6 +20,8 @@ when defined(gcArc):
   when (NimMajor, NimMinor) < (1, 3):
     {.error: "--gc:arc requires nim-1.3+ due to bugs in 1.2".}
 
+import grok
+
 type
   GraphFlag* {.size: sizeof(int).} = enum
     QueryResult  = "the graph only makes sense in relation to another graph"
@@ -275,7 +277,7 @@ proc newNode[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F]; value: N): 
     graph.init(result)
   embirth(graph, result)
 
-proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.example.} =
+proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.ex.} =
   ## Return the number of nodes in a `graph`.  O(1).
   runnableExamples:
     var g = newGraph[int, string]()
@@ -284,14 +286,14 @@ proc len*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): int {.example.} =
   result = len(graph.members)
 
 proc incl[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       edge: Edge[N, E]) {.example.} =
+                                       edge: Edge[N, E]) {.ex.} =
   ## Includes an `edge` in the `graph`.  Has no effect if the `edge` is
   ## already in the `graph`.  O(1).
   assert graph != nil
   assert edge != nil
 
 proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                        node: Node[N, E]) {.example.} =
+                                        node: Node[N, E]) {.ex.} =
   ## Includes a `node` in the `graph`.  Has no effect if the `node` is
   ## already in the `graph`.  O(1).
   runnableExamples:
@@ -311,7 +313,7 @@ proc incl*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     incl graph.hashes, node.value
 
 proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       value: N): Node[N, E] {.example.} =
+                                       value: N): Node[N, E] {.ex.} =
   ## Creates a new node of `value` and adds it to the `graph`.
   ## Returns the new node.  O(1).
   runnableExamples:
@@ -325,7 +327,7 @@ proc add*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   graph.incl result
 
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
-                                            node: Node[N, E]): bool {.example.} =
+                                            node: Node[N, E]): bool {.ex.} =
   ## Returns `true` if `graph` contains `node`.
   ## O(1).
   runnableExamples:
@@ -336,7 +338,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
   result = node.id in graph.members
 
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
-                                            value: N): bool {.example.} =
+                                            value: N): bool {.ex.} =
   ## Returns `true` if `graph` contains a node with the given `value`.
   ## O(1) for `ValueIndex` graphs, else O(n).
   runnableExamples:
@@ -354,7 +356,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
 
 proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         key: N): var Node[N, E]
-  {.example.} =
+  {.ex.} =
   ## Index a mutable `graph` to retrieve a mutable node of value `key`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -384,7 +386,7 @@ proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
     remove(DoublyLinkedList[Node[N, E]] graph.nodes, item)
 
 proc clear*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F])
-  {.example.} =
+  {.ex.} =
   ## Empty a `graph` of all nodes and edges.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -442,7 +444,7 @@ iterator neighbors*[N, E](node: Node[N, E]):
     yield (edge: edge, node: via)
 
 proc del*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                       node: Node[N, E]) {.example.} =
+                                       node: Node[N, E]) {.ex.} =
   ## Remove a `node` from the `graph`; O(n).
   ## Has no effect if the `node` is not in the `graph`.
   ## Not O(1) yet.
@@ -487,7 +489,7 @@ proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
 
 proc node*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         value: N): Node[N, E]
-  {.example.} =
+  {.ex.} =
   ## Create a new node compatible with `graph`; O(1).
   runnableExamples:
     var g = newGraph[int, string]()
@@ -501,7 +503,7 @@ proc node*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
 proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         node: var Node[N, E]; value: E;
                                         target: var Node[N, E]): Edge[N, E]
-  {.example.} =
+  {.ex.} =
   ## Link `node` to `target` via a new edge of `value`; O(1).
   runnableExamples:
     var g = newGraph[int, string]()
@@ -530,7 +532,7 @@ proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   target.incl result
 
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
-                                            edge: Edge[N, E]): bool {.example.} =
+                                            edge: Edge[N, E]): bool {.ex.} =
   ## Returns `true` if `graph` contains `edge`.
   ## O(1).
   runnableExamples:
@@ -542,7 +544,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
 
   result = edge.source in graph or edge.target in graph
 
-proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
+proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.ex.} =
   ## Index a `node` by edge `key`, returning the opposite (mutable) node.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -559,7 +561,7 @@ proc `[]`*[N, E](node: var Node[N, E]; key: E): var Node[N, E] {.example.} =
         break found
     raise newException(KeyError, "edge not found: " & $key)
 
-proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
+proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.ex.} =
   ## Returns `true` if `node` shares an edge with `target`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -572,7 +574,7 @@ proc peers*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
 
   result = node.id in target.peers or target.id in node.peers
 
-iterator nodes*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.example.} =
+iterator nodes*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] {.ex.} =
   ## Yield each node in the `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -583,7 +585,7 @@ iterator nodes*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): Node[N, E] 
   for node in items(graph.nodes):
     yield node
 
-iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): N {.example.} =
+iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): N {.ex.} =
   ## Yield the values of nodes in the `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -595,7 +597,7 @@ iterator items*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]): N {.example
     yield node.value
 
 iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
-  EdgeResult[N, E] {.example.} =
+  EdgeResult[N, E] {.ex.} =
   ## Yield `source` node, `edge`, and `target` node from a `graph`.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -620,7 +622,7 @@ iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
         incl seen, edge.id
         yield (source: source, edge: edge, target: edge.target)
 
-proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.example.} =
+proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.ex.} =
   ## Returns `true` if `edge` links to a node with the given `value`;
   ## else `false`.
   runnableExamples:
@@ -635,7 +637,7 @@ proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.example.} =
 
   result = edge.source.value == value or edge.target.value == value
 
-proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.example.} =
+proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.ex.} =
   ## Returns `true` if the `edge` links to `node`;
   ## else `false`.
   runnableExamples:
@@ -671,7 +673,7 @@ proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
         excl(edge.target.edges, edge.id)
         excl(edge.target.peers, edge.source.id)
 
-proc del*[N, E](node: var Node[N, E]; value: E) {.example.} =
+proc del*[N, E](node: var Node[N, E]; value: E) {.ex.} =
   ## Remove edge with value `value` from `node`. Of course, this also
   ## removes the edge from the `target` node on the opposite side.
   ## Not O(1) yet; indeed, it is relatively slow!
@@ -703,7 +705,7 @@ proc len*[T](list: Container[T]): int
   ## Use count() instead; it expresses the O more clearly.
   result = count(nodes)
 
-proc contains*[N, E](node: Node[N, E]; key: E): bool {.example.} =
+proc contains*[N, E](node: Node[N, E]; key: E): bool {.ex.} =
   ## Returns `true` if an edge with value `key` links `node`.
   ## O(n).
   runnableExamples:
@@ -731,7 +733,7 @@ proc `$`*[N, E](thing: Node[N, E] | Edge[N, E]): string =
   else:
     result = "$" & $typeof(thing)
 
-proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.example.} =
+proc `[]`*[N, E](node: Node[N, E]; key: E): Node[N, E] {.ex.} =
   ## Index a `node` by edge `key`, returning the opposite node.
   runnableExamples:
     var g = newGraph[int, string]()
@@ -787,7 +789,7 @@ proc hash*[N, E, F](graph: Graph[N, E, F]): Hash =
   result = !$h
 
 when false:
-  proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.example.} =
+  proc `->`*[N, E](node: Node[N, E]; target: Node[N, E]): bool {.ex.} =
     runnableExamples:
       var g = newGraph[int, string]()
       discard g.add 3
@@ -806,7 +808,7 @@ proc nodeSet[N, E, F](graph: Graph[N, E, F]): HashSet[N] =
   for node in nodes(graph):
     result.incl node.value
 
-proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool {.example.} =
+proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool {.ex.} =
   ## Returns `true` if there are no nodes in the graph with
   ## duplicate values.
   ## O(1) for `ValueIndex` graphs, else O(n).

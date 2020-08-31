@@ -6,6 +6,8 @@ requires "nim >= 1.2.6"
 
 requires "https://github.com/disruptek/testes >= 0.2.2 & < 1.0.0"
 requires "https://github.com/disruptek/skiplists < 1.0.0"
+requires "https://github.com/disruptek/grok < 1.0.0"
+requires "https://github.com/disruptek/criterion < 1.0.0"
 
 proc execCmd(cmd: string) =
   echo "execCmd:" & cmd
