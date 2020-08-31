@@ -121,23 +121,6 @@ when false:
     HeavyNodesGraph = concept g
       {UniqueNodes, UltraLight} <= g.flags == false
 
-# just a hack to output the example numbers during docgen...
-when defined(nimdoc):
-  var
-    exampleCounter {.compileTime.}: int
-
-macro example(x: untyped): untyped =
-  result = x
-  when defined(nimdoc):
-    for node in x.last:
-      if node.kind == nnkCall:
-        if node[0].kind == nnkIdent:
-          if $node[0] == "runnableExamples":
-            inc exampleCounter
-            let id = repr(x[0])
-            hint "fig. $1 for $2:" % [ $exampleCounter, $id ]
-            hint indent(repr(node[1]), 4)
-
 template graph[N, E, F](g: Graph[N, E, F]): Graph[N, E, F] = g
 template node[N, E](n: Node[N, E]): Node[N, E] = n
 template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
