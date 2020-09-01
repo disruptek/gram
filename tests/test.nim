@@ -1,6 +1,7 @@
 import testes
 
 import gram
+import skiplists
 
 template checkMembership(g: Graph; n: Node): untyped =
   check n in g

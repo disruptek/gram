@@ -20,7 +20,16 @@ when defined(gcArc):
   when (NimMajor, NimMinor) < (1, 3):
     {.error: "--gc:arc requires nim-1.3+ due to bugs in 1.2".}
 
+import skiplists
 import grok
+
+const
+  gramSkipLists* {.booldefine.} = true
+
+when gramSkipLists:
+  type Container[T] = distinct SkipList[T]
+else:
+  type Container[T] = distinct DoublyLinkedList[T]
 
 type
   GraphFlag* {.size: sizeof(int).} = enum
@@ -61,9 +70,6 @@ type
     edges: IntSet
     peers: IntSet
     initialized: bool
-
-  Container[Element] = distinct DoublyLinkedList[Element]
-  Element[N, E] = Node[N, E] or Edge[N, E]
 
   Edge*[N, E] = ref EdgeObj[N, E]                            ##
   ## An edge connects two nodes.
@@ -125,40 +131,65 @@ template graph[N, E, F](g: Graph[N, E, F]): Graph[N, E, F] = g
 template node[N, E](n: Node[N, E]): Node[N, E] = n
 template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
 
-proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
-  ## Create a new container for nodes or edges.
-  result = Container[form] initDoublyLinkedList[form]()
+when gramSkipLists:
+  proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
+    ## Create a new container for nodes or edges.
+    result = Container[form] toSkipList[form]([])
 
-iterator nodes[T](list: var Container[T]): DoublyLinkedNode[T] =
-  for item in nodes(DoublyLinkedList[T] list):
-    yield item
+  proc append[T](list: var Container[T]; value: T) =
+    add(SkipList[T] list, value)
 
-iterator mitems[T](list: var Container[T]): var T =
-  for item in mitems(DoublyLinkedList[T] list):
-    yield item
+  proc count[T](list: Container[T]): int = count(SkipList[T] list)
 
-iterator items[T](list: Container[T]): T =
-  for item in items(DoublyLinkedList[T] list):
-    yield item
+  proc clear[T](list: var Container[T]) =
+    list = Container[T](nil)
 
-proc append[T](list: var Container[T]; value: T) =
-  append(DoublyLinkedList[T] list, newDoublyLinkedNode(value))
+  iterator items[T](list: Container[T]): T =
+    for item in items(SkipList[T] list):
+      yield item
 
-proc remove[T](list: var Container[T]; node: T) =
-  ## Remove an element from container.
-  for item in nodes(list):
-    if item.value.id == node.id:
+  iterator mitems[T](list: var Container[T]): var T =
+    for item in mitems(SkipList[T] list):
+      yield item
+
+  proc remove[T](list: var Container[T]; value: T) =
+    remove(SkipList[T] list, value)
+
+else:
+  proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
+    ## Create a new container for nodes or edges.
+    result = Container[form] initDoublyLinkedList[form]()
+
+  iterator nodes[T](list: var Container[T]): DoublyLinkedNode[T] =
+    for item in nodes(DoublyLinkedList[T] list):
+      yield item
+
+  iterator mitems[T](list: var Container[T]): var T =
+    for item in mitems(DoublyLinkedList[T] list):
+      yield item
+
+  iterator items[T](list: var Container[T]): T =
+    for item in items(DoublyLinkedList[T] list):
+      yield item
+
+  proc append[T](list: var Container[T]; value: T) =
+    append(DoublyLinkedList[T] list, newDoublyLinkedNode(value))
+
+  proc remove[T](list: var Container[T]; node: T) =
+    ## Remove an element from container.
+    for item in nodes(list):
+      if item.value.id == node.id:
+        remove(DoublyLinkedList[T] list, item)
+
+  proc clear[T](list: var Container[T]) =
+    ## Remove all elements from container.
+    for item in nodes(list):
       remove(DoublyLinkedList[T] list, item)
 
-proc clear[T](list: var Container[T]) =
-  ## Remove all elements from container.
-  for item in nodes(list):
-    remove(DoublyLinkedList[T] list, item)
-
-proc count[T](list: Container[T]): int =
-  ## Count the number of items in a container.
-  for node in items(list):
-    inc result
+  proc count[T](list: Container[T]): int =
+    ## Count the number of items in a container.
+    for node in items(DoublyLinkedList[T] list):
+      inc result
 
 # exported for serialization purposes
 proc len*[T](list: Container[T]): int

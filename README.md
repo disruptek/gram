@@ -24,6 +24,10 @@ or if you're still using Nimble like it's 2012,
 $ nimble install https://github.com/disruptek/gram
 ```
 
+## Options
+
+- `--define:gramSkipLists=off` turns off the use of SkipLists for containers
+
 ## Documentation
 
 I'm going to try a little harder with these docs by using `runnableExamples`
