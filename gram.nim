@@ -21,6 +21,8 @@ when defined(gcArc):
     {.error: "--gc:arc requires nim-1.3+ due to bugs in 1.2".}
 
 import skiplists
+export skiplists.cmp
+
 import grok
 
 const
