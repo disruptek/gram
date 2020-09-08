@@ -4,6 +4,7 @@
 [submodule "grok"]
 	path = grok
 	url = https://github.com/disruptek/grok
+  branch = master
 [submodule "testes"]
 	path = testes
 	url = https://github.com/disruptek/testes
