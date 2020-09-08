@@ -382,7 +382,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
         result = true
         break
 
-template getNodeImpl(iterItems: untyped): untyped {.dirty.} =
+template getNodeImpl(graph, key, iterItems: untyped): untyped =
   block found:
     block search:
       # optimization using ValueIndex
@@ -401,9 +401,9 @@ template getNodeImpl(iterItems: untyped): untyped {.dirty.} =
 
 
 proc `[]`*[N, E; F: static[GraphFlags]](
-  graph: Graph[N, E, F]; key: N): Node[N, E] {.ex.} =
-  ## Index an immutable `graph` to retrieve a mutable node of value `key`.
-  getNodeImpl items
+  graph: Graph[N, E, F]; key: N): Node[N, E] =
+  ## Index an immutable `graph` to retrieve a immutable node of value `key`.
+  getNodeImpl graph, key, items
 
 proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
                                         key: N): var Node[N, E] {.ex.} =
@@ -413,7 +413,7 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     discard g.add 3
     assert g[3].value == 3
 
-  getNodeImpl mitems
+  getNodeImpl graph, key, mitems
 
 
 proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
