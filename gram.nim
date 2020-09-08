@@ -382,15 +382,7 @@ proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
         result = true
         break
 
-proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
-                                        key: N): var Node[N, E]
-  {.ex.} =
-  ## Index a mutable `graph` to retrieve a mutable node of value `key`.
-  runnableExamples:
-    var g = newGraph[int, string]()
-    discard g.add 3
-    assert g[3].value == 3
-
+template getNodeImpl(graph, key, iterItems: untyped): untyped =
   block found:
     block search:
       # optimization using ValueIndex
@@ -400,12 +392,29 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
           break search
 
       # find it and return it
-      for node in mitems(graph.nodes):
+      for node in iterItems(graph.nodes):
         if node.value == key:
           result = node
           break found
 
     raise newException(KeyError, "node not found: " & $key)
+
+
+proc `[]`*[N, E; F: static[GraphFlags]](
+  graph: Graph[N, E, F]; key: N): Node[N, E] =
+  ## Index an immutable `graph` to retrieve a immutable node of value `key`.
+  getNodeImpl graph, key, items
+
+proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
+                                        key: N): var Node[N, E] {.ex.} =
+  ## Index a mutable `graph` to retrieve a mutable node of value `key`.
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    assert g[3].value == 3
+
+  getNodeImpl graph, key, mitems
+
 
 proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
   ## Empty a `graph` of all nodes and edges.
