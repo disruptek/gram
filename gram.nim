@@ -707,25 +707,28 @@ proc del*[N, E](node: var Node[N, E]; value: E) {.ex.} =
   ## Remove edge with value `value` from `node`. Of course, this also
   ## removes the edge from the `target` node on the opposite side.
   when gramSkipLists:
-    ## O(log n)
+    ## O(log n) if I get around to implementing it
   else:
     ## O(n)
-  runnableExamples:
-    var g = newGraph[int, string]()
-    discard g.add 3
-    discard g.add 9
-    discard g.edge(g[3], "squared", g[9])
-    var
-      n9 = g[3]["squared"]
-    n9.del "squared"
-    assert not peers(g[3], n9)
+    runnableExamples:
+      var g = newGraph[int, string]()
+      discard g.add 3
+      discard g.add 9
+      discard g.edge(g[3], "squared", g[9])
+      var
+        n9 = g[3]["squared"]
+      n9.del "squared"
+      assert not peers(g[3], n9)
 
-  for edge in nodes(node.outgoing):
-    if edge.value.value == value:
-      node.del edge.value
-  for edge in nodes(node.incoming):
-    if edge.value.value == value:
-      node.del edge.value
+  when gramSkipLists:
+    raise newException(Defect, "unsupported")
+  else:
+    for edge in nodes(node.outgoing):
+      if edge.value.value == value:
+        node.del edge.value
+    for edge in nodes(node.incoming):
+      if edge.value.value == value:
+        node.del edge.value
 
 proc contains*[N, E](node: Node[N, E]; key: E): bool {.ex.} =
   ## Returns `true` if an edge with value `key` links `node`.
