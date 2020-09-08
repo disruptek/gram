@@ -507,7 +507,7 @@ proc incl[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
     # if we are the target node,
     if edge.target.id == node.id:
       # it's an incoming edge,
-      # FIXME: need to handle Undirected graphs properly
+      {.warning: "need to handle Undirected graphs properly".}
       append(node.incoming, edge)
       # and we'll ensure it's in our peers
       incl node.peers, edge.source.id
@@ -681,20 +681,23 @@ proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.ex.} =
 proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Remove `edge` from `node`.  Of course, this also removes
   ## `edge` from the `target` node on the opposite side.
-  ## Not O(1) yet; indeed, it is relatively slow!
+  when gramSkipLists:
+    ## O(log n)
+  else:
+    ## O(n)
 
   # leave this in a single proc so it's harder to screw up
   if node.initialized:
     if edge.id in node.edges:
       # remove the source side
-      # FIXME: need to handle Undirected graphs properly
+      {.warning: "need to handle Undirected graphs properly".}
       remove(edge.source.incoming, edge)
       remove(edge.source.outgoing, edge)
       excl(edge.source.edges, edge.id)
       excl(edge.source.peers, edge.target.id)
       # we can skip removing the target side if this is a "loop"
       if edge.target.id != edge.source.id:
-        # FIXME: need to handle Undirected graphs properly
+        {.warning: "need to handle Undirected graphs properly".}
         remove(edge.target.incoming, edge)
         remove(edge.target.outgoing, edge)
         excl(edge.target.edges, edge.id)
@@ -703,7 +706,10 @@ proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
 proc del*[N, E](node: var Node[N, E]; value: E) {.ex.} =
   ## Remove edge with value `value` from `node`. Of course, this also
   ## removes the edge from the `target` node on the opposite side.
-  ## Not O(1) yet; indeed, it is relatively slow!
+  when gramSkipLists:
+    ## O(log n)
+  else:
+    ## O(n)
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
