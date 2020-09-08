@@ -1,6 +1,7 @@
 [submodule "skiplists"]
 	path = skiplists
 	url = https://github.com/disruptek/skiplists
+  branch = master
 [submodule "grok"]
 	path = grok
 	url = https://github.com/disruptek/grok
@@ -8,6 +9,8 @@
 [submodule "testes"]
 	path = testes
 	url = https://github.com/disruptek/testes
+  branch = master
 [submodule "criterion"]
 	path = criterion
 	url = https://github.com/disruptek/criterion
+  branch = master
