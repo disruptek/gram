@@ -23,22 +23,22 @@ testes:
 
   ## add an item to the graph
   var
-    g3 = g.add 3
+    n3 = g.add 3
   check len(g) == 1
 
   ## equality and membership
-  checkMembership(g, g3)
+  checkMembership(g, n3)
 
   ## second node
   var
-    g9 = g.add 9
-  g.incl g9
+    n9 = g.add 9
+  g.incl n9
   check g.len == 2
 
   ## check that we can get the new node.
-  checkMembership(g, g9)
+  checkMembership(g, n9)
   ## but we can still get the first node?
-  checkMembership(g, g3)
+  checkMembership(g, n3)
 
   ## empty the graph.
   clear g
@@ -46,22 +46,38 @@ testes:
 
   ## now add some new immutable nodes.
   let
-    g5 = g.add 5
-    g7 = g.add 7
+    n5 = g.add 5
+    n7 = g.add 7
   check len(g) == 2
-  checkMembership(g, g5)
-  checkMembership(g, g7)
+  checkMembership(g, n5)
+  checkMembership(g, n7)
 
   ## now add back in nodes we removed.
-  incl(g, g9)
-  incl(g, g3)
+  incl(g, n9)
+  incl(g, n3)
 
   ## and we can still get those, right?
-  checkMembership(g, g9)
-  checkMembership(g, g3)
+  checkMembership(g, n9)
+  checkMembership(g, n3)
 
   ## okay, so it seems like we can get things in and out.
   ## let's try making an edge...
   var
-    squared = g.edge(g3, "squared", g9)
-  checkEdge(g, squared, g3, g9)
+    squared = g.edge(n3, "squared", n9)
+  checkEdge(g, squared, n3, n9)
+
+  ## and remove it from a node using the edge object
+  n3.del squared
+  check squared notin n3
+  check squared notin n9
+  check "squared" notin n3
+  check "squared" notin n9
+
+  ## and add it back in
+  squared = g.edge(n3, "squared", n9)
+  checkEdge(g, squared, n3, n9)
+
+  ## and now remove it by value
+  n9.del "squared"
+  check "squared" notin n3
+  check "squared" notin n9

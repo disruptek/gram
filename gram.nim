@@ -1,6 +1,5 @@
 import std/strutils
 import std/monotimes
-import std/lists
 import std/intsets
 import std/macros
 import std/hashes
@@ -25,15 +24,8 @@ export skiplists.cmp
 
 import grok
 
-const
-  gramSkipLists* {.booldefine.} = true
-
-when gramSkipLists:
-  type Container[T] = distinct SkipList[T]
-else:
-  type Container[T] = distinct DoublyLinkedList[T]
-
 type
+  Container[T] = SkipList[T]
   GraphFlag* {.size: sizeof(int).} = enum
     QueryResult  = "the graph only makes sense in relation to another graph"
     UniqueNodes  = "the nodes in the graph all have unique values"
@@ -133,65 +125,11 @@ template graph[N, E, F](g: Graph[N, E, F]): Graph[N, E, F] = g
 template node[N, E](n: Node[N, E]): Node[N, E] = n
 template edge[N, E](e: Edge[N, E]): Edge[N, E] = e
 
-when gramSkipLists:
-  proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
-    ## Create a new container for nodes or edges.
-    result = Container[form] toSkipList[form]([])
+proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
+  ## Create a new container for nodes or edges.
+  result = toSkipList[form]([])
 
-  proc append[T](list: var Container[T]; value: T) =
-    add(SkipList[T] list, value)
-
-  proc count[T](list: Container[T]): int = count(SkipList[T] list)
-
-  proc clear[T](list: var Container[T]) =
-    list = Container[T](nil)
-
-  iterator items[T](list: Container[T]): T =
-    for item in items(SkipList[T] list):
-      yield item
-
-  iterator mitems[T](list: var Container[T]): var T =
-    for item in mitems(SkipList[T] list):
-      yield item
-
-  proc remove[T](list: var Container[T]; value: T) =
-    remove(SkipList[T] list, value)
-
-else:
-  proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
-    ## Create a new container for nodes or edges.
-    result = Container[form] initDoublyLinkedList[form]()
-
-  iterator nodes[T](list: var Container[T]): DoublyLinkedNode[T] =
-    for item in nodes(DoublyLinkedList[T] list):
-      yield item
-
-  iterator mitems[T](list: var Container[T]): var T =
-    for item in mitems(DoublyLinkedList[T] list):
-      yield item
-
-  iterator items[T](list: var Container[T]): T =
-    for item in items(DoublyLinkedList[T] list):
-      yield item
-
-  proc append[T](list: var Container[T]; value: T) =
-    append(DoublyLinkedList[T] list, newDoublyLinkedNode(value))
-
-  proc remove[T](list: var Container[T]; node: T) =
-    ## Remove an element from container.
-    for item in nodes(list):
-      if item.value.id == node.id:
-        remove(DoublyLinkedList[T] list, item)
-
-  proc clear[T](list: var Container[T]) =
-    ## Remove all elements from container.
-    for item in nodes(list):
-      remove(DoublyLinkedList[T] list, item)
-
-  proc count[T](list: Container[T]): int =
-    ## Count the number of items in a container.
-    for node in items(DoublyLinkedList[T] list):
-      inc result
+proc append[T](list: var Container[T]; value: T) = list.add value
 
 # exported for serialization purposes
 proc len*[T](list: Container[T]): int
@@ -414,7 +352,6 @@ proc `[]`*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
     assert g[3].value == 3
 
   getNodeImpl graph, key, mitems
-
 
 proc clear[N, E; F: static[GraphFlags]](graph: var GraphObj[N, E, F]) =
   ## Empty a `graph` of all nodes and edges.
@@ -661,6 +598,7 @@ iterator edges*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F]):
 proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.ex.} =
   ## Returns `true` if `edge` links to a node with the given `value`;
   ## else `false`.
+  ## O(1).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
@@ -676,6 +614,7 @@ proc contains*[N, E](edge: Edge[N, E]; value: N): bool {.ex.} =
 proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.ex.} =
   ## Returns `true` if the `edge` links to `node`;
   ## else `false`.
+  ## O(1).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
@@ -690,10 +629,7 @@ proc contains*[N, E](edge: Edge[N, E]; node: Node[N, E]): bool {.ex.} =
 proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
   ## Remove `edge` from `node`.  Of course, this also removes
   ## `edge` from the `target` node on the opposite side.
-  when gramSkipLists:
-    ## O(log n)
-  else:
-    ## O(n)
+  ## O(log n).
 
   # leave this in a single proc so it's harder to screw up
   if node.initialized:
@@ -712,36 +648,49 @@ proc del*[N, E](node: var Node[N, E]; edge: Edge[N, E]) =
         excl(edge.target.edges, edge.id)
         excl(edge.target.peers, edge.source.id)
 
+proc contains*[N, E](node: Node[N, E]; edge: Edge[N, E]): bool {.ex.} =
+  ## Returns `true` if Node `node` has Edge `edge`.
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    discard g.add 9
+    let e = g.edge(g[3], "squared", g[9])
+    assert e in g[3]
+
+  result = edge.id in node.edges
+
 proc del*[N, E](node: var Node[N, E]; value: E) {.ex.} =
   ## Remove edge with value `value` from `node`. Of course, this also
   ## removes the edge from the `target` node on the opposite side.
-  when gramSkipLists:
-    ## O(log n) if I get around to implementing it
-  else:
-    ## O(n)
-    runnableExamples:
-      var g = newGraph[int, string]()
-      discard g.add 3
-      discard g.add 9
-      discard g.edge(g[3], "squared", g[9])
-      var
-        n9 = g[3]["squared"]
-      n9.del "squared"
-      assert not peers(g[3], n9)
+  ## O(log n)
+  runnableExamples:
+    var g = newGraph[int, string]()
+    discard g.add 3
+    discard g.add 9
+    discard g.edge(g[3], "squared", g[9])
+    var n9 = g[3]["squared"]
+    n9.del "squared"
+    assert not peers(g[3], n9)
 
-  when gramSkipLists:
-    raise newException(Defect, "unsupported")
-  else:
-    for edge in nodes(node.outgoing):
-      if edge.value.value == value:
-        node.del edge.value
-    for edge in nodes(node.incoming):
-      if edge.value.value == value:
-        node.del edge.value
+  func thisOne(a: SkipList[Edge[N, E]]): skiplists.cmp =
+    if a.isNil:
+      Undefined
+    elif a.value.value == value:
+      Equal
+    elif a.value.value < value:
+      Less
+    else:
+      More
+
+  var victim: Container[Edge[N, E]]
+  if find(node.outgoing, victim, compare = thisOne):
+    node.del victim.value
+  if find(node.incoming, victim, compare = thisOne):
+    node.del victim.value
 
 proc contains*[N, E](node: Node[N, E]; key: E): bool {.ex.} =
   ## Returns `true` if an edge with value `key` links `node`.
-  ## O(n).
+  ## O(log n).
   runnableExamples:
     var g = newGraph[int, string]()
     discard g.add 3
@@ -749,16 +698,19 @@ proc contains*[N, E](node: Node[N, E]; key: E): bool {.ex.} =
     discard g.edge(g[3], "squared", g[9])
     assert "squared" in g[3]
 
-  block found:
-    for edge, peer in incoming(node):
-      if edge.value == key:
-        result = true
-        break found
+  func thisOne(a: SkipList[Edge[N, E]]): skiplists.cmp =
+    if a.isNil:
+      Undefined
+    elif a.value.value == key:
+      Equal
+    elif a.value.value < key:
+      Less
+    else:
+      More
 
-    for edge, peer in outgoing(node):
-      if edge.value == key:
-        result = true
-        break found
+  var victim: Container[Edge[N, E]]
+  result = result or find(node.outgoing, victim, thisOne)
+  result = result or find(node.incoming, victim, thisOne)
 
 proc `$`*[N, E](thing: Node[N, E] | Edge[N, E]): string =
   ## A best-effort convenience.
