@@ -14,3 +14,6 @@
 	path = criterion
 	url = https://github.com/disruptek/criterion
   branch = master
+[submodule "hasts"]
+	path = hasts
+	url = https://github.com/haxscramper/hasts.git

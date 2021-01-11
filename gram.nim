@@ -5,8 +5,6 @@ import std/macros
 import std/hashes
 import std/sets
 import std/options
-import hasts/graphviz_ast
-export topng, toDotNodeId
 
 ##
 ## Goals
@@ -22,6 +20,9 @@ import skiplists
 export skiplists.cmp
 
 import grok
+
+import hasts/graphviz_ast
+export toDotNodeId
 
 type
   Container[T] = SkipList[T]
@@ -130,7 +131,6 @@ proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
 
 proc append[T](list: var Container[T]; value: T) = list.add value
 
-# exported for serialization purposes
 proc len*[T](list: Container[T]): int
   {.deprecated: "count() conveys the O(n) cost".} =
   ## Use count() instead; it expresses the O more clearly.
@@ -508,6 +508,7 @@ proc edge*[N, E; F: static[GraphFlags]](
   graph: var Graph[N, E, F];
   node: Node[N, E]; value: E;
   target: Node[N, E]): Edge[N, E] =
+  ## Add new edge into graph using immutable source and target nodes.
 
   var node = node
   var target = target
@@ -893,3 +894,7 @@ proc dotRepr*[N, E, F](graph: Graph[N, E, F]): DotGraph =
     proc(edge: Edge[N, E]): DotEdge =
       DotEdge(label: some $edge.value),
   )
+
+proc toPng*[N, E, F](graph: DotGraph, outfile: string) =
+  ## Save `graph` to file and convert it to image.
+  graph.toPng(outfile)

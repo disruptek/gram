@@ -1,6 +1,7 @@
 import testes
 
-import ../gram
+import gram
+import hasts/graphviz_ast
 
 template checkMembership(g: Graph; n: Node): untyped =
   check n in g
@@ -82,9 +83,6 @@ testes:
   check "squared" notin n3
   check "squared" notin n9
 
-import hasts/graphviz_ast
-
-testes:
   var graph = newGraph[int, string]()
 
   let node1 = graph.add 12
