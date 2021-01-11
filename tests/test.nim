@@ -1,6 +1,6 @@
 import testes
 
-import gram
+import ../gram
 
 template checkMembership(g: Graph; n: Node): untyped =
   check n in g
@@ -81,3 +81,15 @@ testes:
   n9.del "squared"
   check "squared" notin n3
   check "squared" notin n9
+
+import hasts/graphviz_ast
+
+testes:
+  var graph = newGraph[int, string]()
+
+  let node1 = graph.add 12
+  discard graph.edge(node1, "Hello", graph.add 13)
+
+  let dotg = graph.dotRepr()
+  echo dotg
+  # dotg.toPng("/tmp/image.png")

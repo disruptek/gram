@@ -5,6 +5,7 @@ license = "MIT"
 
 requires "https://github.com/disruptek/skiplists >= 0.4.1 & < 1.0.0"
 requires "https://github.com/disruptek/grok < 1.0.0"
+requires "https://github.com/haxscramper/hasts"
 
 when not defined(release):
   requires "https://github.com/disruptek/testes >= 0.7.8 & < 1.0.0"
