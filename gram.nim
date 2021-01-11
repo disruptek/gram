@@ -4,6 +4,7 @@ import std/intsets
 import std/macros
 import std/hashes
 import std/sets
+import std/options
 
 ##
 ## Goals
@@ -19,6 +20,9 @@ import skiplists
 export skiplists.cmp
 
 import grok
+
+import hasts/graphviz_ast
+export toDotNodeId
 
 type
   Container[T] = SkipList[T]
@@ -127,7 +131,6 @@ proc newContainer*[N, E, F](graph: Graph[N, E, F]; form: typedesc): auto =
 
 proc append[T](list: var Container[T]; value: T) = list.add value
 
-# exported for serialization purposes
 proc len*[T](list: Container[T]): int
   {.deprecated: "count() conveys the O(n) cost".} =
   ## Use count() instead; it expresses the O more clearly.
@@ -500,6 +503,17 @@ proc edge*[N, E; F: static[GraphFlags]](graph: var Graph[N, E, F];
   node.incl result
   target.incl result
 
+
+proc edge*[N, E; F: static[GraphFlags]](
+  graph: var Graph[N, E, F];
+  node: Node[N, E]; value: E;
+  target: Node[N, E]): Edge[N, E] =
+  ## Add new edge into graph using immutable source and target nodes.
+
+  var node = node
+  var target = target
+  edge(graph, node, value, target)
+
 proc contains*[N, E; F: static[GraphFlags]](graph: Graph[N, E, F];
                                             edge: Edge[N, E]): bool {.ex.} =
   ## Returns `true` if `graph` contains `edge`.
@@ -818,3 +832,69 @@ proc nodesAreUnique*[N, E, F](graph: Graph[N, E, F]): bool {.ex.} =
         else:
           seen.incl value
       result = true
+
+proc dotRepr*[N, E, F](
+    graph: Graph[N, E, F],
+    nodeDotRepr: proc(node: Node[N, E]): DotNode,
+    edgeDotRepr: proc(edge: Edge[N, E]): DotEdge = nil,
+  ): DotGraph =
+  ## Convert `graph` to graphviz representation, using `edgeDotRepr` and
+  ## `nodeDotRepr` to convert edges and nodes respectively.
+  ##
+  ## Default graph styling is monospaced rectangle with left-aligned text,
+  ## but it can be changed later by setting `styleNode` and `styleEdge`
+  ## fields, or configuring each node individually in converter callbacks.
+  ##
+  ## If ids for edges/nodes are not created in callbacks they will be added
+  ## automatically based on `hash()` for edge/node.
+  result = DotGraph(
+    styleNode: DotNode(
+      shape: nsaBox,
+      labelAlign: nlaLeft,
+      fontname: "consolas",
+    ),
+    styleEdge: DotEdge(
+      fontname: "consolas"
+    )
+  )
+
+  for node in nodes(graph):
+    var dotNode = nodeDotRepr(node)
+    if dotNode.id.isEmpty():
+      dotNode.id = hash(node)
+
+    result.nodes.add dotNode
+
+  if edgeDotRepr.isNil:
+    for edge in edges(graph):
+      result.edges.add DotEdge(
+        src: hash(edge.source),
+        to: @[hash(edge.source)]
+      )
+
+  else:
+    for edge in edges(graph):
+      var dotEdge = edgeDotRepr(edge.edge)
+      if dotEdge.src.isEmpty():
+        dotEdge.src = hash(edge.source)
+
+      if dotEdge.to.len == 0:
+        dotEdge.to = @[hash(edge.target)]
+
+      result.edges.add dotEdge
+
+proc dotRepr*[N, E, F](graph: Graph[N, E, F]): DotGraph =
+  ## Convert `graph` to graphviz representation, using stringification for
+  ## node and edge values.
+  return dotRepr(
+    graph,
+    proc(node: Node[N, E]): DotNode =
+      DotNode(shape: nsaRect, label: some $node.value),
+
+    proc(edge: Edge[N, E]): DotEdge =
+      DotEdge(label: some $edge.value),
+  )
+
+proc toPng*[N, E, F](graph: DotGraph, outfile: string) =
+  ## Save `graph` to file and convert it to image.
+  graph.toPng(outfile)
