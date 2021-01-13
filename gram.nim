@@ -19,7 +19,7 @@ import std/options
 import skiplists
 export skiplists.cmp
 
-import grok
+from grok import ex
 
 import hasts/graphviz_ast
 export toDotNodeId
