@@ -1,4 +1,4 @@
-import testes
+import balls
 
 import gram
 import hasts/graphviz_ast
@@ -14,7 +14,7 @@ template checkEdge(g: Graph; e: Edge; s: Node; t: Node): untyped =
   check s in e
   check t in e
 
-testes:
+suite "generic graphs":
   ## make a new graph with int nodes and string edges.
   var
     g = newGraph[int, string]()
