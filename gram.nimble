@@ -1,4 +1,4 @@
-version = "0.3.5"
+version = "0.3.6"
 author = "disruptek"
 description = "simple generic graphs"
 license = "MIT"

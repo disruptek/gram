@@ -897,4 +897,4 @@ proc dotRepr*[N, E, F](graph: Graph[N, E, F]): DotGraph =
 
 proc toPng*(graph: DotGraph; filename: string) =
   ## Render `graph` to a PNG with the given filename.
-  graph.toPng filename
+  graphviz_ast.toPng(graph, filename)
