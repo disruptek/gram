@@ -895,6 +895,6 @@ proc dotRepr*[N, E, F](graph: Graph[N, E, F]): DotGraph =
       DotEdge(label: some $edge.value),
   )
 
-proc toPng*[N, E, F](graph: DotGraph, outfile: string) =
-  ## Save `graph` to file and convert it to image.
-  graph.toPng(outfile)
+proc toPng*(graph: DotGraph; filename: string) =
+  ## Render `graph` to a PNG with the given filename.
+  graph.toPng filename
