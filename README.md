@@ -24,6 +24,19 @@ or if you're still using Nimble like it's 2012,
 $ nimble install https://github.com/disruptek/gram
 ```
 
+### Graphviz (dot) Output
+
+For this, you'll need to install
+[haxscramper's](https://github.com/haxscramper)
+[hmisc](https://github.com/haxscramper/hmisc) and
+[hasts](https://github.com/haxscramper/hasts) libraries; then you can
+`import gram/graphviz` to get the `dotRepr` and `toPng` procedures.
+
+```
+$ nimph clone hmisc
+$ nimph clone hasts
+```
+
 ## Documentation
 
 I'm going to try a little harder with these docs by using `runnableExamples`
