@@ -1,7 +1,6 @@
 import balls
 
 import gram
-import hasts/graphviz_ast
 
 template checkMembership(g: Graph; n: Node): untyped =
   check n in g
