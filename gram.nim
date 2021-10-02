@@ -84,7 +84,7 @@ converter toInt*(flags: set[GraphFlag]): GraphFlags =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(flags):
-      result = `or`(result, 1 shl flag.ord)
+      result = result or (1 shl flag.ord)
   else:
     result = cast[int](flags)
 
@@ -92,7 +92,7 @@ converter toFlags*(value: GraphFlags): set[GraphFlag] =
   # the vm cannot cast between set and int
   when nimvm:
     for flag in items(GraphFlag):
-      if `and`(value, 1 shl flag.ord) != 0:
+      if (value and (1 shl flag.ord)) != 0:
         result.incl flag
   else:
     result = cast[set[GraphFlag]](value)
